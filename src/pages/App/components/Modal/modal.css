@@ -1,0 +1,41 @@
+.modal-container {
+    position: fixed;
+    top: -30%;
+    left: 35%;
+    width: 500px;
+    height: 200px;
+    background-color: #fff;
+    z-index: 100;
+    border-radius: 5px;
+    opacity: 0;
+    transition: all .3s linear;
+}
+
+.modal-container.active {
+    opacity: 1;
+    transform: translate3d(0, 600px, 0);
+    transition: all .3s linear;
+}
+
+.modal-layer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, .5);
+    opacity: 0;
+    display: none;
+}
+
+
+.modal-layer.active {
+    display: block;
+    opacity: 1;
+    transition: opacity .2s linear;
+}
+
+.text {
+    opacity: 1;
+}
