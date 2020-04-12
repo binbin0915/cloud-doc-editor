@@ -1,74 +1,34 @@
-.container-fluid {
-    position: relative;
-    overflow: hidden;
-}
-
-.icon-button {
-    background: none;
-    border: none;
-    color: inherit;
-    outline: none;
-}
-
-.file-list {
-    box-sizing: border-box;
-    padding: 10px 0;
-}
-
-.c-link {
-    cursor: pointer;
-}
-
-.start-page {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    font-size: 30px;
-    line-height: 300px;
-    color: #ccc;
-    text-align: center;
-}
-
-.left-panel {
-    height: 100vh;
-    overflow-y: auto;
-}
-
-.button-group {
-    position: absolute;
+html, body, #root {
     width: 100%;
-    bottom: 0
+    height: 100%;
 }
 
-.no-border {
-    border-radius: 0 !important;
+.editor-header {
+    height: 60px;
+    line-height: 60px;
 }
 
-.error-input {
-    color: #495057 !important;
-    background-color: #fff !important;
-    border-color: rgb(255, 79, 82) !important;
-    outline: 0 !important;
-    box-shadow: 0 0 0 0.2rem rgba(255, 79, 82, 0.4) !important
+.editor-main {
+    height: calc(100% - 60px);
 }
 
-.form-control:focus.error-input {
-    color: #495057 !important;
-    background-color: #fff !important;
-    border-color: rgb(255, 79, 82) !important;
-    outline: 0 !important;
-    box-shadow: 0 0 0 0.2rem rgba(255, 79, 82, 0.4) !important
+.editor-list {
+    height: 100%;
 }
 
-.CodeMirror-scroll {
-    height: 535px !important;
+.login-tip {
+    width: 100%;
+    height: 100%;
+    margin: 0 auto;
 }
 
-.sync-status {
-    font-size: 12px;
-    color: #959694;
-    position: absolute;
-    bottom: 12px;
-    left: 10px
+.login-tip .not-login-info {
+    font-size: 30px;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc;
+    background: rgba(200, 200, 200, .1);
 }

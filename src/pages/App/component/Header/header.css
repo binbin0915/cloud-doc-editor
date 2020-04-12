@@ -1,0 +1,44 @@
+.header-left {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.header-search {
+    width: 12rem;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-right > span {
+    cursor: pointer;
+}
+
+.header-right-icon{
+    margin-right: 1.5rem;
+}
+
+.user-icon {
+    border-radius: 50% !important;
+}
+
+.header-menu {
+    text-align: center;
+    border-bottom: none;
+}
+
+.header-menu span {
+    font-size: 18px !important;
+}
+
+.header-drop-menu {
+    padding: 0.2rem 2.5rem;
+}
+
+:global .ant-tabs-bar {
+    margin: 0;
+}

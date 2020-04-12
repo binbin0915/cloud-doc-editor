@@ -4,6 +4,12 @@
  * @date 2020-02-22
  */
 const Store = window.require('electron-store');
+const {remote} = window.require('electron');
+
+function handleClose() {
+    remote.getCurrentWindow().close();
+}
+
 const {obj2Array} = require('./helper');
 const fileStore = new Store({
     name: 'File Data'
@@ -34,5 +40,6 @@ const saveFilesToStore = async files => {
 module.exports = {
     saveFilesToStore,
     fileStore,
-    settingsStore
+    settingsStore,
+    handleClose
 };

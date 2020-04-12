@@ -1,0 +1,24 @@
+.list-item {
+    display: flex;
+    align-items: center;
+    padding-left: 1.5rem;
+}
+
+.title {
+    flex: 1;
+    padding-left: 1.5rem;
+}
+
+.check-close {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+}
+
+.rename-input {
+    width: 60%;
+}
+
+.item-icon {
+    cursor: pointer;
+}

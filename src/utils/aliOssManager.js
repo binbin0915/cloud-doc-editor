@@ -3,8 +3,8 @@
  * @author ainuo5213
  * @data 2020-02-27
  */
-const OSS = require('ali-oss');
-const fs = require('fs');
+const OSS = window.require('ali-oss');
+const fs = window.require('fs');
 const {SuccessModel, ErrorModel, FailedModel} = require('./Model');
 
 class AliOSS {
@@ -42,11 +42,12 @@ class AliOSS {
      * 上传文件
      * @param key 云空间的名字
      * @param localPath 本地文件路径
+     * @param options
      */
-    async uploadFile(key, localPath) {
+    async uploadFile(key, localPath, options = {type: '.md'}) {
         try {
             // object表示上传到OSS的Object名称，localPath表示本地文件或者文件路径
-            let {res} = await this.client.put(`${key}.md`, localPath);
+            let {res} = await this.client.put(`${key}${options.type}`, localPath);
             if (res.status === 200) {
                 return new SuccessModel({
                     msg: '上传成功'
@@ -122,6 +123,14 @@ class AliOSS {
             return new ErrorModel({
                 msg: '阿里云OSS服务器异常'
             })
+        }
+    }
+
+    async getImgUrl(key, cndUrl) {
+        try {
+            return this.client.generateObjectUrl(key, cndUrl);
+        } catch (e) {
+
         }
     }
 }

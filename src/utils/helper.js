@@ -50,3 +50,8 @@ export function timeStampToString(timeStamp) {
     const date = new Date(timeStamp);
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
 }
+
+export function isEmail(email) {
+    let regExp = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
+    return regExp.test(email)
+}

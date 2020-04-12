@@ -1,0 +1,10 @@
+.btn-group {
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.btn-group button {
+    width: 50%;
+}

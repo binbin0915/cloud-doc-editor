@@ -5,7 +5,7 @@
   "description": "",
   "scripts": {
     "onlyEle": "nodemon --watch main.js --watch menuTemplate.js --exec \"electron main.js\"",
-    "dev": "concurrently \"wait-on http://localhost:3000/App.html && electron ./main.js\" \"cross-env BROWSER=none npm start\"",
+    "dev": "concurrently \"wait-on http://localhost:3000/App.html && electron ./main.js\" \"cross-env NODE_ENV=development BROWSER=none npm start\"",
     "start": "./node_modules/.bin/webpack-dev-server --config webpack.config.dev.js",
     "build": "./node_modules/.bin/webpack --config webpack.config.build.js --progress"
   },
@@ -43,20 +43,32 @@
     "write-file-webpack-plugin": "^4.2.0"
   },
   "dependencies": {
+    "@ant-design/icons": "^4.0.5",
     "@fortawesome/fontawesome-svg-core": "^1.2.19",
     "@fortawesome/free-brands-svg-icons": "^5.9.0",
     "@fortawesome/free-solid-svg-icons": "^5.9.0",
     "@fortawesome/react-fontawesome": "^0.1.4",
-    "classnames": "^2.2.6",
+    "ali-oss": "^6.5.1",
+    "antd": "^4.1.1",
     "axios": "^0.19.2",
+    "babel-plugin-import": "^1.13.0",
     "babel-plugin-transform-async-to-generator": "^6.24.1",
     "babel-plugin-transform-runtime": "^6.23.0",
     "bootstrap": "^4.4.1",
+    "classnames": "^2.2.6",
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^0.28.11",
+    "dotenv": "^8.2.0",
+    "electron": "^6.0.0",
+    "electron-is-dev": "^1.1.0",
+    "electron-store": "^4.0.0",
+    "events": "^3.1.0",
     "file-loader": "^1.1.11",
+    "for-editor": "^0.3.5",
     "html-webpack-include-assets-plugin": "^1.0.4",
+    "iconv-lite": "^0.5.1",
     "immutable": "^4.0.0-rc.12",
+    "is-online": "^8.2.2",
     "optimize-css-assets-webpack-plugin": "^4.0.3",
     "prop-types": "^15.7.2",
     "react": "^16.8.6",
@@ -70,11 +82,8 @@
     "script-ext-html-webpack-plugin": "^2.0.1",
     "style-loader": "^0.20.3",
     "url-loader": "^1.0.1",
-    "webpack-merge": "^4.1.5",
-    "electron": "^6.0.0",
-    "electron-is-dev": "^1.1.0",
-    "electron-store": "^4.0.0",
     "uuid": "^3.3.2",
-    "wait-on": "^3.3.0"
+    "wait-on": "^3.3.0",
+    "webpack-merge": "^4.1.5"
   }
 }

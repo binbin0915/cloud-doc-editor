@@ -11,7 +11,7 @@ const devPath = path.resolve(__dirname, 'dev'); // 开发目录
 const distPath = path.resolve(__dirname, './dist'); // 打包目录
 
 const mainFile = 'main.js';
-const fileConfig = ['App']; // 打包规则
+const fileConfig = ['App', 'Settings', 'User', 'Search']; // 打包规则
 const isDev = type === 'webpack.config.dev.js'; // 判断环境
 
 function getHtmlArray(entryMap) {
