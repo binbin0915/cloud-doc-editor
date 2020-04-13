@@ -3,6 +3,8 @@ import {Button, Form, Input, message} from 'antd'
 import {UserOutlined} from "@ant-design/icons";
 import axios from '@/utils/http'
 import './index.css'
+import event from '@/utils/eventBus'
+
 
 
 const Store = window.require('electron-store');
@@ -17,12 +19,15 @@ const settingsStore = new Store({
 const Logout = () => {
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState(settingsStore.get('user'));
+    const {setLoginInfo} = useAction(action);
     useEffect(() => {
         axios.post('/user/isLogin', {token: settingsStore.get('token')})
             .then(({code, data}) => {
                 if (code === 0) {
                     setUser(data);
                     settingsStore.set('user', data);
+                    setLoginInfo(data);
+                    event.emit('loginInfo-change', data)
                 } else {
                     settingsStore.set('user', null);
                     settingsStore.set('token', null);
@@ -36,6 +41,7 @@ const Logout = () => {
             .then(({code, msg}) => {
                 setLoading(false);
                 if (code === 0) {
+                    setLoginInfo({});
                     setUser(null);
                     settingsStore.set('user', null);
                     settingsStore.set('token', null);

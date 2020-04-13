@@ -6,7 +6,8 @@ import {
     ADD_FILE,
     ADD_FILES,
     SAVE_FILE_TO_RAM,
-    RENAME_RAM_FILE
+    RENAME_RAM_FILE,
+    SET_LOGIN_INFO
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});

@@ -1,9 +1,7 @@
-import React from "react";
+import React, {Suspense, useCallback} from "react";
 import {Route, Switch, Redirect} from 'react-router-dom'
-import {Row} from 'antd'
-import EditorMain from './component/EditorMain'
-import UploadFile from './component/UploadFile'
-import DownloadFile from './component/DownloadFile'
+import {Row, Spin, Menu} from 'antd'
+import {UploadFile, DownloadFile, EditorMain, Setting} from './component'
 import Header from './component/Header'
 import './App.css'
 
@@ -14,7 +12,6 @@ const Store = window.require('electron-store');
 const settingsStore = new Store({
     name: 'Settings'
 });
-
 
 export default function App() {
     const defaultSavedFileLocation = path.join(remote.app.getPath('documents'), 'markdown');
@@ -31,12 +28,15 @@ export default function App() {
                 <Header/>
             </Row>
             <Row className={'editor-main'}>
-                <Switch>
-                    <Route path={'/editor'} component={EditorMain}/>
-                    <Route path={'/uploadFile'} component={UploadFile}/>
-                    <Route path={'/downloadFile'} component={DownloadFile}/>
-                    <Redirect from={"*"} to={'/editor'}/>
-                </Switch>
+                <Suspense fallback={<Spin className={'router-spin'} size={'large'}/>}>
+                    <Switch>
+                        <Route path={'/editor'} render={props => <EditorMain {...props}/>}/>
+                        <Route path={'/uploadFile'} render={props => <UploadFile {...props}/>}/>
+                        <Route path={'/downloadFile'} render={props => <DownloadFile {...props}/>}/>
+                        <Route path={'/setting'} render={props => <Setting {...props}/>}/>
+                        <Redirect from={"*"} to={'/editor'}/>
+                    </Switch>
+                </Suspense>
             </Row>
         </React.Fragment>
     )

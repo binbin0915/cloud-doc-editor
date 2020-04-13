@@ -3,8 +3,6 @@ import {Form, Input, Button, message} from 'antd';
 import {UserOutlined, LockOutlined} from '@ant-design/icons';
 import axios from '@/utils/http'
 import {isEmail} from '@/utils/helper'
-import useAction from "@/pages/App/hooks/useAction";
-import event from '@/utils/eventBus'
 
 const {handleClose, settingsStore} = require('@/utils/store');
 const ipcRenderer = window.require('electron').ipcRenderer;
@@ -23,7 +21,6 @@ const Login = () => {
                 if (code === 0) {
                     settingsStore.set('token', data.token);
                     settingsStore.set('user', data.user);
-                    event.emit('loginInfo-change', data.user);
                     ipcRenderer.send('user-online', data.token);
                     setLoading(false);
                     handleClose();
@@ -39,11 +36,10 @@ const Login = () => {
     };
 
     return (
-        <div id="login" className="login-area mt-4">
+        <div id="login" className="login-area">
             <Form
                 onFinish={handleSubmit}
-                name="normal_login"
-                className="login-form">
+                name="normal_login">
                 <Form.Item hasFeedback name="username" rules={[
                     {
                         required: true,
@@ -73,12 +69,9 @@ const Login = () => {
                 </Form.Item>
 
                 <Form.Item>
-                    <Button loading={loading} htmlType={"submit"} type="primary"
+                    <Button block loading={loading} htmlType={"submit"} type="primary"
                             className="login-form-button">
                         登录
-                    </Button>
-                    <Button onClick={handleClose} className="login-form-button">
-                        取消
                     </Button>
                 </Form.Item>
             </Form>

@@ -12,7 +12,23 @@ let client = oss({
     accessKeySecret: 'R3JuK67lEFhB9lH5UJljoCbYJ8NpBI',
     bucket: 'cloud-doc-editor'
 });
-let url = client.generateObjectUrl('/625815f7-7193-4867-82d3-b2c0c5c61ed8/img/20200412111710.jpg')
+client.downloadFile = async function (key, filePath) {
+    try {
+        let {res, stream} = await client.getStream(`${key}.md`);
+        if (res.status === 200) {
+            let writeStream = fs.createWriteStream(filePath);
+            stream.pipe(writeStream);
+            return 'success'
+        } else {
+            console.log('asd')
+            return 'error'
+        }
+    } catch (e) {
+        console.log(e)
+        return 'error'
+    }
+};
+// let url = client.generateObjectUrl('/625815f7-7193-4867-82d3-b2c0c5c61ed8/img/20200412111710.jpg')
 // client.list({prefix: '625815f7-7193-4867-82d3-b2c0c5c61ed8/'})
 //     .then(data => console.log(data));
 // const filePath = path.join(__dirname, '../../../1.md');
@@ -30,8 +46,8 @@ let url = client.generateObjectUrl('/625815f7-7193-4867-82d3-b2c0c5c61ed8/img/20
 //         console.log(data)
 //     });
 
-// client.downloadFile('69f65fed-446c-476f-8170-c41f7474c51c/sss:50a7d32d-7735-4d5c-8106-aa3ffa61cc8c', path.join(__dirname, './test2.md'))
-//     .then(data => console.log(data));
+client.downloadFile('625815f7-7193-4867-82d3-b2c0c5c61ed8/ddd:ff206997-5569-47c5-8c57-a6b01a328507.md', path.join(__dirname, './test2.md'))
+    .then(data => console.log(data));
 // AliOSS.getObjectList({
 //     prefix: 'markdown/',
 //     delimiter: '/'

@@ -12,6 +12,15 @@ import Logout from "./components/Logout";
 import store from '../../store/store'
 import {Provider} from 'react-redux'
 
+import {message} from 'antd'
+
+message.config({
+    top: 75,
+    duration: 1.5,
+    maxCount: 3,
+    rtl: true,
+});
+
 const {ipcRenderer} = window.require('electron');
 
 

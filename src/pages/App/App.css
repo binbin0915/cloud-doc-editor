@@ -15,20 +15,3 @@ html, body, #root {
 .editor-list {
     height: 100%;
 }
-
-.login-tip {
-    width: 100%;
-    height: 100%;
-    margin: 0 auto;
-}
-
-.login-tip .not-login-info {
-    font-size: 30px;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ccc;
-    background: rgba(200, 200, 200, .1);
-}

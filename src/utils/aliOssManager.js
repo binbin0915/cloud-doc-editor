@@ -106,6 +106,7 @@ class AliOSS {
     }
 
     async downloadFile(key, filePath) {
+        console.log(key, filePath);
         try {
             let {res, stream} = await this.client.getStream(`${key}.md`);
             if (res.status === 200) {

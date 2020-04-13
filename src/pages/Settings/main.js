@@ -5,6 +5,15 @@ import './Setting.css'
 import Header from './components/Header'
 import Location from './components/Location'
 
+import {message} from 'antd'
+
+message.config({
+    top: 75,
+    duration: 1.5,
+    maxCount: 3,
+    rtl: true,
+});
+
 const Store = window.require('electron-store');
 const {remote} = window.require('electron');
 

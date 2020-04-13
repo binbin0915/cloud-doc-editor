@@ -23,21 +23,6 @@ const access = settingsStore.get('accessKey');
 const secret = settingsStore.get('secretKey');
 const bucket = settingsStore.get('bucketName');
 
-const dataSource = [
-    {
-        key: '1',
-        name: '胡彦斌',
-        age: 32,
-        address: '西湖区湖底公园1号',
-    },
-    {
-        key: '2',
-        name: '胡彦祖',
-        age: 42,
-        address: '西湖区湖底公园1号',
-    },
-];
-
 const columns = [
     {
         title: '#',
@@ -144,7 +129,7 @@ const Action = ({record}) => {
 };
 
 export default function () {
-    const [user, setUser] = useState(settingsStore.get('user'));
+    const [user, setUser] = useState(null);
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
     const filesArr = obj2Array(files);
     useEffect(() => {
@@ -154,6 +139,7 @@ export default function () {
             .then(({code, data}) => {
                 // 用户已登陆
                 if (code === 0) {
+                    setUser(data);
                     settingsStore.set('user', data);
                 } else {
                     setUser(null);
@@ -181,7 +167,7 @@ export default function () {
                            dataSource={filesArr}
                            columns={columns}/>
                 ) : (
-                    <NotLogin/>
+                    <NotLogin text={'你还未登录'}/>
                 )
             }
         </React.Fragment>

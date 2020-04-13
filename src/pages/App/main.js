@@ -6,6 +6,14 @@ import './index.css';
 import App_markup from './App';
 import store from '../../store/store'
 import * as serviceWorker from './serviceWorker';
+import {message} from 'antd'
+
+message.config({
+    top: 75,
+    duration: 1.5,
+    maxCount: 3,
+    rtl: true,
+});
 
 ReactDOM.render(
     <Provider store={store}>

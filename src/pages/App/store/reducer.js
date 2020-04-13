@@ -7,7 +7,7 @@ import {
     ADD_FILE,
     ADD_FILES,
     SAVE_FILE_TO_RAM,
-    RENAME_RAM_FILE
+    RENAME_RAM_FILE,
 } from './constants'
 import {array2Obj, obj2Array} from "../../../utils/helper";
 
