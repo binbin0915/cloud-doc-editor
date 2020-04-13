@@ -143,7 +143,7 @@ export default function () {
                     setLoading(false);
                 })
         }
-    });
+    }, []);
 
     return (
         <React.Fragment>

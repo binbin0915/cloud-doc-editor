@@ -13,6 +13,7 @@ import {readFile, copyFile, writeFile, deleteFile} from '@/utils/fileHelper'
 import uuidv4 from "uuid/v4";
 
 const nodePath = window.require('path');
+const fs = window.require('fs');
 
 const {ipcRenderer} = window.require('electron');
 
@@ -80,12 +81,16 @@ export default function () {
                     let tempName = urlArr[urlArr.length - 1];
                     let extname = nodePath.extname(tempName);
                     let imgName = nodePath.basename(tempName, extname);
-                    try {
-                        await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
-                        let url = await manager.getImgUrl(`${userId}/img/${imgName}${extname}`);
-                        newContent = content.replace(pattern, `![${imgItem.alt}](${url})`);
-                    } catch (e) {
-                        // do nothing
+                    if (!fs.existsSync(nodePath.join(uploadDir, tempName))) {
+                        return
+                    } else {
+                        try {
+                            await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
+                            let url = await manager.getImgUrl(`${userId}/img/${imgName}${extname}`);
+                            newContent = content.replace(pattern, `![${imgItem.alt}](${url})`);
+                        } catch (e) {
+                            // do nothing
+                        }
                     }
                 }
                 record.body = newContent;
