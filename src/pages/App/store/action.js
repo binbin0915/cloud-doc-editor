@@ -28,3 +28,5 @@ export const renameRamFile = (willRemoveFile, willAddedFile) => ({
     type: RENAME_RAM_FILE,
     payload: {willRemoveFile, willAddedFile}
 });
+
+export const setLoginInfo = loginInfo => ({type: SET_LOGIN_INFO, payload: {loginInfo}});

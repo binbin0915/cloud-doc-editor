@@ -1,14 +1,18 @@
 import React, {useState} from 'react'
+import {useHistory} from 'react-router-dom'
 import {Form, Input, Button, message} from 'antd';
 import {UserOutlined, LockOutlined} from '@ant-design/icons';
 import axios from '@/utils/http'
 import {isEmail} from '@/utils/helper'
+import useAction from "../../../hooks/useAction";
+import * as action from '../../../store/action'
 
-const {handleClose, settingsStore} = require('@/utils/store');
-const ipcRenderer = window.require('electron').ipcRenderer;
+const {settingsStore} = require('@/utils/store');
 
 const Login = () => {
     const [loading, setLoading] = useState(false);
+    const history = useHistory();
+    const {setLoginInfo} = useAction(action);
     const handleSubmit = ({username, password}) => {
         let data = {};
         data.password = password;
@@ -21,9 +25,9 @@ const Login = () => {
                 if (code === 0) {
                     settingsStore.set('token', data.token);
                     settingsStore.set('user', data.user);
-                    ipcRenderer.send('user-online', data.token);
+                    setLoginInfo({token: data.token, user: data.user});
                     setLoading(false);
-                    handleClose();
+                    history.push('/editor')
                 } else {
                     setLoading(false);
                     message.error('用户名或密码错误');

@@ -10,3 +10,18 @@
     color: #ccc;
     background: rgba(200, 200, 200, .1);
 }
+
+.main-pane {
+    height: calc(100% - 32px);
+}
+
+:global .ant-tabs-bar {
+    margin: 0;
+}
+:global .for-container {
+    height: 515px;
+    border-radius: 0px;
+}
+:global .ant-tabs-content {
+    height: 100%;
+}

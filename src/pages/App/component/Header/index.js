@@ -10,7 +10,7 @@ import {
     LineOutlined,
     FullscreenOutlined,
     CloseOutlined
-
+    
 } from '@ant-design/icons'
 import axios from '@/utils/http'
 import './header.css'
@@ -41,24 +41,25 @@ export default function Header() {
     const history = useHistory();
     const location = useLocation();
     const [user, setUser] = useState(null);
-    const [defaultKey, setDefaultKey] = useState(location.pathname);
+    const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
     const handleEditorClick = useCallback(e => {
         history.push(e.key);
     }, []);
-
+    
     useEffect(() => {
         axios.post('/user/isLogin', {token: settingsStore.get('token')})
             .then(({code, data}) => {
                 if (code === 0) {
                     setUser(data);
                     settingsStore.set('user', data);
-                } else {
+                }
+                else {
                     settingsStore.set('user', null);
                     settingsStore.set('token', null);
                 }
             });
     }, []);
-
+    
     const SettingDropItem = useMemo(() => {
         const handleClick = ({item, key, keyPath, domEvent}) => {
             history.push(key);
@@ -77,13 +78,13 @@ export default function Header() {
             </Menu>
         )
     }, []);
-
-
+    
+    
     return (
         <React.Fragment>
             <Col className={'header-left'} span={4}>
                 {
-                    user && user.id && (
+                    loginInfo && loginInfo.user && loginInfo.user.id && (
                         <Dropdown overlay={UserDropItem}>
                             <Button size={'large'} className={'user-icon'} icon={<UserOutlined/>}/>
                         </Dropdown>
@@ -94,7 +95,7 @@ export default function Header() {
             <Col span={16}>
                 <Menu
                     onClick={handleEditorClick}
-	    selectedKeys={[location.pathname]}
+                    selectedKeys={[location.pathname]}
                     className={'header-menu'}
                     mode={'horizontal'}>
                     <Menu.Item key={'/editor'}>

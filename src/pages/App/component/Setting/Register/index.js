@@ -75,7 +75,7 @@ function Register(props) {
                 setLoading(false);
                 if (code === 0) {
                     message.success("注册成功");
-                    props.history.push('/login');
+                    props.history.push('/setting/login');
                 } else {
                     message.error(msg);
                     if (code === 5) {

@@ -11,15 +11,11 @@
 .header-right {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-around;
 }
 
 .header-right > span {
     cursor: pointer;
-}
-
-.header-right-icon{
-    margin-right: 1.5rem;
 }
 
 .user-icon {

@@ -8,8 +8,9 @@ import {
     ADD_FILES,
     SAVE_FILE_TO_RAM,
     RENAME_RAM_FILE,
+    SET_LOGIN_INFO
 } from './constants'
-import {array2Obj, obj2Array} from "../../../utils/helper";
+import {array2Obj, obj2Array} from "@/utils/helper";
 
 const {fileStore, settingsStore} = require('@/utils/store');
 
@@ -19,6 +20,7 @@ const defaultState = fromJS({
     activeFileId: getActiveFileId() || '',
     openedFileIds: getOpenedFileIds() || [],
     unSavedFileIds: getUnSavedFileIds() || [],
+    loginInfo: {}
 });
 
 function getActiveFileId() {
@@ -55,22 +57,32 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case SET_LOGIN_INFO:
+            return state.merge({
+                loginInfo: fromJS(action.payload.loginInfo)
+            });
         case RENAME_RAM_FILE:
             // 删去willRemoveFiles
             let willRemoveFileId = action.payload.willRemoveFile.id;
             let willAddedFile = action.payload.willAddedFile;
             // 删去setting的
-
+            
             let {[willRemoveFileId]: willRemoveFile, ...willAddedFiles} = state.get('files').toJS();
-
-            let hasAddedFiles = {...willAddedFiles, [willAddedFile.id]: willAddedFile};
+            
+            let hasAddedFiles = {
+                ...willAddedFiles,
+                [willAddedFile.id]: willAddedFile
+            };
             setFiles(hasAddedFiles);
             return state.merge({
                 files: fromJS(hasAddedFiles)
             });
         case SAVE_FILE_TO_RAM:
             return state.merge({
-                files: fromJS({...state.get('files').toJS(), [action.payload.file.id]: action.payload.file})
+                files: fromJS({
+                    ...state.get('files').toJS(),
+                    [action.payload.file.id]: action.payload.file
+                })
             });
         case ADD_FILES:
             // 传过来的是file arr
@@ -81,7 +93,10 @@ export default function (state = defaultState, action) {
                 files: fromJS(addedFiles)
             });
         case ADD_FILE:
-            const addedFile = {...state.get('files').toJS(), [action.payload.file.id]: action.payload.file};
+            const addedFile = {
+                ...state.get('files').toJS(),
+                [action.payload.file.id]: action.payload.file
+            };
             if (!action.payload.file.isNewlyCreate) {
                 setFiles(addedFile);
             }
@@ -97,7 +112,10 @@ export default function (state = defaultState, action) {
             const file = state.get('files').toJS()[action.payload.id];
             file.loaded = true;
             file.body = action.payload.data;
-            const newFiles = {...state.get('files').toJS(), [action.payload.id]: file};
+            const newFiles = {
+                ...state.get('files').toJS(),
+                [action.payload.id]: file
+            };
             return state.merge({
                 files: fromJS(newFiles)
             });

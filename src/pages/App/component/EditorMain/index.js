@@ -23,11 +23,15 @@ export default function () {
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
     const {changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles} = useAction(actions);
     const openedFiles = filesArr.filter(file => openedFileIds.findIndex(id => id === file.id) !== -1);
-
-    events.on('delete-file', targetKey => {
-        remove(targetKey)
-    });
-
+    const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
+    
+    console.log(loginInfo);
+    useEffect(() => {
+        events.on('delete-file', targetKey => {
+            remove(targetKey)
+        });
+    }, []);
+    
     useEffect(() => {
         let activeFile = files[activeKey];
         if (activeFile) {
@@ -37,7 +41,8 @@ export default function () {
                     readFile(activeFile.filePath).then(data => {
                         setFileLoaded(activeKey, data);
                     })
-                } catch (err) {
+                }
+                catch (err) {
                     // 文件已被删除
                     message.error('文件已被删除');
                     deleteFile(activeKey);
@@ -45,37 +50,40 @@ export default function () {
             }
         }
     }, [activeKey, files]);
-
+    
     const handleContentOnEdit = useCallback((targetKey, action) => {
         eval(action)(targetKey)
     }, [openedFileIds]);
-
+    
     const remove = useCallback(targetKey => {
         // let lastIndex = 0;
         const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== targetKey);
-        console.log(newOpenedFileIds);
         changeOpenedFiles(newOpenedFileIds);
         if (newOpenedFileIds.length === 0) {
             changeActiveKey('');
             return
         }
+        let curFileIndex = openedFileIds.findIndex(fileId => targetKey === fileId);
+        let index;
         if (newOpenedFileIds.length === 1) {
-            changeActiveKey(openedFileIds[0]);
-            handleTabChange(openedFileIds[0]);
+            index = openedFileIds[0];
         }
         // 关闭的是已激活的tab
         if (targetKey === activeKey) {
-            let curFileIndex = openedFileIds.findIndex(fileId => targetKey === fileId);
             if (curFileIndex === 0) { // 当前激活的tab在第一个的位置，则正在编辑第二个
-                changeActiveKey(openedFileIds[0]);
-                handleTabChange(openedFileIds[0]);
-            } else { // 当前激活的tab在其他的位置，则正在编辑前一个
-                changeActiveKey(openedFileIds[curFileIndex - 1]);
-                handleTabChange(openedFileIds[curFileIndex - 1]);
+                index = openedFileIds[0];
+            }
+            else { // 当前激活的tab在其他的位置，则正在编辑前一个
+                index = openedFileIds[curFileIndex - 1];
             }
         }
+        else {
+            index = openedFileIds[curFileIndex - 1];
+        }
+        changeActiveKey(index);
+        handleTabChange(index);
     }, [openedFileIds]);
-
+    
     const handleTabChange = useCallback(activeKey => {
         changeActiveKey(activeKey);
         let activeFile = files[activeKey];
@@ -90,7 +98,7 @@ export default function () {
                 })
         }
     }, [activeKey, files, remove]);
-
+    
     const handleAddImg = useCallback(file => {
         // 上传图片到本地 static文件夹
         let fileName = copyFile(file.path);
@@ -100,14 +108,14 @@ export default function () {
         saveFile(activeFile);
         handleSave(activeFile.body);
     });
-
+    
     const timer = useRef(null);
-
+    
     const handleValueChange = value => {
         const file = files[activeKey];
         file.body = value;
         saveFile(file);
-
+        
         if (timer.current) {
             clearTimeout(timer.current);
         }
@@ -121,7 +129,7 @@ export default function () {
                 })
         }, 2000);
     };
-
+    
     const handleSave = useCallback(value => {
         writeFile(files[activeKey].filePath, value)
             .then(() => {
@@ -132,19 +140,20 @@ export default function () {
                 message.success("保存文件失败")
             })
     }, [files, activeKey]);
-
+    
     const handleDrag = e => {
         e.preventDefault()
     };
-
+    
     const handleDrop = async e => {
         let importedFiles = e.dataTransfer.files;
-
+        
         if (importedFiles.length === 1) {
             let path = importedFiles[0].path;
             if (nodePath.extname(path) !== '.md') {
                 message.error("导入的文件不是md")
-            } else {
+            }
+            else {
                 let samePathFile = filesArr.find(file => file.filePath === path);
                 if (samePathFile) {
                     message.error('文件已导入');
@@ -168,7 +177,8 @@ export default function () {
                         addFile(file);
                     });
             }
-        } else {
+        }
+        else {
             const filteredFiles = Array.from(importedFiles).filter(file => {
                 const isAlreadyAdded = filesArr.find(ramFile => {
                     return ramFile.filePath === file.path
@@ -186,11 +196,13 @@ export default function () {
                     loaded: false
                 };
             });
-            message.success(`成功导入${imPortedFilesArr.length}个文件`);
             addFiles(imPortedFilesArr);
+            if (imPortedFilesArr.length) {
+                message.success(`成功导入${imPortedFilesArr.length}个文件`);
+            }
         }
     };
-
+    
     return (
         <React.Fragment>
             <Col className={'editor-list'} span={4}>
@@ -206,11 +218,15 @@ export default function () {
                     {
                         activeKey ? (
                             <Tabs
-                                animated={{inkBar: true, tabPane: true}}
+                                animated={{
+                                    inkBar: true,
+                                    tabPane: true
+                                }}
                                 activeKey={activeKey}
                                 onChange={handleTabChange}
                                 type={'editable-card'}
                                 hideAdd={true}
+                                className={'main-pane'}
                                 onEdit={handleContentOnEdit}
                             >
                                 {openedFiles.map(pane => {
