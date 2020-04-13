@@ -1,5 +1,5 @@
 import React, {useState, useCallback} from 'react'
-import {Button, Input, Form} from "antd";
+import {Button, Input, Form, message} from "antd";
 import {SaveOutlined, DownloadOutlined} from "@ant-design/icons";
 
 const {remote} = window.require('electron');
@@ -9,20 +9,36 @@ const settingsStore = new Store({
 });
 
 
-const saveFile = settingsStore.get('savedFileLocation');
-const downloadFile = settingsStore.get('fileDownloadPath');
 export default function () {
+    const saveFile = settingsStore.get('savedFileLocation');
+    const downloadFile = settingsStore.get('fileDownloadPath');
     const [savedFileLocation, setSavedFileLocation] = useState(saveFile);
     const [fileDownloadPath, setFileDownloadPath] = useState(downloadFile);
     const handleSelect = useCallback(async message => {
         let title = message === 'save' ? '选择保存位置' : '选择下载位置';
-        let path = await remote.dialog.showOpenDialog({
+        let pathStatus = await remote.dialog.showOpenDialog({
             title,
             properties: ['openDirectory', 'createDirectory']
         });
+        if (!pathStatus.canceled) {
+            let filePath = pathStatus.filePaths[0];
+            if (message === 'save') {
+                setSavedFileLocation(filePath);
+            } else {
+                setFileDownloadPath(filePath);
+            }
+        }
     }, []);
+    const handleSubmit = useCallback(() => {
+        settingsStore.set('savedFileLocation', savedFileLocation);
+        settingsStore.set('fileDownloadPath', fileDownloadPath);
+        message.success("保存文件位置成功")
+    }, [savedFileLocation, fileDownloadPath]);
     return (
-        <Form id="login" className="login-area">
+        <Form
+            onFinish={handleSubmit}
+            id="login"
+            className="login-area">
             <Form.Item
                 type={'text'}
                 name="verifyCode">

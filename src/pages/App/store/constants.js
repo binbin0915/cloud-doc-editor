@@ -7,3 +7,4 @@ export const ADD_FILES = 'ADD_FILES';
 export const SAVE_FILE_TO_RAM = 'SAVE_FILE_TO_RAM';
 export const RENAME_RAM_FILE = 'RENAME_RAM_FILE';
 export const SET_LOGIN_INFO = 'SET_LOGIN_INFO';
+export const CHANGE_AUTO_SYNC = 'CHANGE_AUTO_SYNC';

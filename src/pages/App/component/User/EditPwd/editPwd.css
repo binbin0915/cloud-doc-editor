@@ -1,19 +1,12 @@
-.setting-main {
+.user-login-area {
     width: 20%;
     margin: 5rem auto;
 }
-
-.login-area {
-    width: 100%;
-    margin: 1.5rem auto;
-}
-
-:global .login-form {
+.user-login-form {
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    height: 100%;
 }
 
 :global .ant-input-prefix {

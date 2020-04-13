@@ -8,13 +8,9 @@ const fs = window.require('fs');
 const {SuccessModel, ErrorModel, FailedModel} = require('./Model');
 
 class AliOSS {
-    constructor({region, accessKeyId, accessKeySecret, bucket}) {
-        this.accessKeyId = accessKeyId;
-        this.region = region;
-        this.accessKeySecret = accessKeySecret;
-        this.bucket = bucket;
-        this.store = OSS({region, accessKeyId, accessKeySecret, bucket});
-        this.client = new OSS({region, accessKeyId, accessKeySecret, bucket});
+    constructor({accessKeyId, accessKeySecret, bucket, endpoint}) {
+        this.store = OSS({endpoint, accessKeyId, accessKeySecret, bucket});
+        this.client = new OSS({endpoint, accessKeyId, accessKeySecret, bucket});
     }
 
     signatureUrl(objectName) {

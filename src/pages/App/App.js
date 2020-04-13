@@ -1,7 +1,7 @@
 import React, {Suspense, useEffect} from "react";
 import {Route, Switch, Redirect} from 'react-router-dom'
 import {Row, Spin, message} from 'antd'
-import {UploadFile, DownloadFile, EditorMain, Setting} from './component'
+import {UploadFile, DownloadFile, EditorMain, Setting, EditPwd} from './component'
 import Header from './component/Header'
 import './App.css'
 import axios from '@/utils/http'
@@ -19,7 +19,7 @@ const token =  settingsStore.get('token');
 export default function App() {
     const defaultSavedFileLocation = path.join(remote.app.getPath('documents'), 'markdown');
     const fileDownloadPath = remote.app.getPath('downloads');
-    const {setLoginInfo} = useAction(action);
+    const {setLoginInfo, changeAutoSync} = useAction(action);
     if (!settingsStore.get('savedFileLocation')) {
         settingsStore.set('savedFileLocation', defaultSavedFileLocation);
     }
@@ -33,7 +33,7 @@ export default function App() {
                     setLoginInfo(data);
                     message.success("登录成功");
                 } else {
-                    message.error("登陆失败")
+                    changeAutoSync(false);
                 }
             })
             .catch(() => message.error('连接服务器失败'))
@@ -50,6 +50,7 @@ export default function App() {
                         <Route path={'/uploadFile'} render={props => <UploadFile {...props}/>}/>
                         <Route path={'/downloadFile'} render={props => <DownloadFile {...props}/>}/>
                         <Route path={'/setting'} render={props => <Setting {...props}/>}/>
+                        <Route path={'/user'} render={props => <EditPwd {...props}/>}/>
                         <Redirect from={"*"} to={'/editor'}/>
                     </Switch>
                 </Suspense>

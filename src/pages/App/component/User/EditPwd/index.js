@@ -1,18 +1,20 @@
 import React, {useState, useRef, useCallback} from "react";
 import axios from '@/utils/http'
 import {Button, Form, Input, message} from "antd";
-import {LockOutlined, UserOutlined, MailOutlined, VerifiedOutlined} from "@ant-design/icons";
+import {LockOutlined, MailOutlined, VerifiedOutlined} from "@ant-design/icons";
 import {isEmail} from "@/utils/helper";
+import './editPwd.css'
+import * as action from "../../../store/action";
+import useAction from "../../../hooks/useAction";
 
-const {handleClose} = require('@/utils/store');
-
-function Register(props) {
+function EditPwd(props) {
     const [loading, setLoading] = useState(false);
     const [codeText, setCodeText] = useState('发送验证码');
     const [disabled, setDisabled] = useState(false);
     const [email, setEmail] = useState("");
     const [emailStatus, setEmailStatus] = useState("");
     const [codeStatus, setCodeStatus] = useState("");
+    const {setLoginInfo} = useAction(action);
     const timer = useRef(null);
 
     const getVerify = useCallback(() => {
@@ -34,7 +36,7 @@ function Register(props) {
             }, 1000);
             axios.post('/mail/verification', {
                 email,
-                type: 'register'
+                type: 'editPwd'
             })
                 .then(({code, msg}) => {
                     if (code === 0) {
@@ -62,27 +64,30 @@ function Register(props) {
         setEmail(e.target.value);
     }, [email]);
 
-    const handleSubmit = ({username, password, email, verifyCode: verificationCode}) => {
+    const handleSubmit = ({password, email, verifyCode: verificationCode}) => {
         setLoading(true);
-        axios.post('/user/register', {
-            username,
+        axios.post('/user/editPwd', {
             password,
             email,
             verificationCode,
-            type: "register"
+            type: "editPwd"
         })
             .then(({code, msg}) => {
                 setLoading(false);
                 if (code === 0) {
-                    message.success("注册成功");
-                    props.history.push('/login');
+                    setLoginInfo({});
+                    message.success("修改密码成功，前往登录");
+                    props.history.push('/setting/login');
                 } else {
                     message.error(msg);
                     if (code === 5) {
                         setCodeStatus('error');
-                    } else if (code === 7) {
+                    } else if (code === 4) {
+                        message.error("邮箱格式不正确");
                         setEmailStatus('error');
-                        setCodeStatus('success')
+                    } else if (code === 6) {
+                        message.error("不存在该用户");
+                        setEmailStatus('error');
                     }
                 }
             })
@@ -93,22 +98,42 @@ function Register(props) {
     };
 
     return (
-        <div id="register" className="register-area mt-4">
+        <div id="login" className="user-login-area">
             <Form
                 onFinish={handleSubmit}
                 name="normal_login"
-                className="login-form">
+                className="user-login-form">
                 <Form.Item
                     rules={[
                         {
                             required: true,
-                            message: '请输入用户名',
-                        }
-                    ]} hasFeedback name="username">
+                            message: '请输入确认邮箱',
+                        },
+                        {
+                            type: 'email',
+                            message: '邮箱格式不正确'
+                        },
+                        ({getFieldValue}) => ({
+                            validator(rule, value) {
+                                if (!value || isEmail(getFieldValue('email'))) {
+                                    setEmailStatus("success");
+                                    return Promise.resolve();
+                                }
+                                setEmailStatus("error");
+                                return Promise.reject('');
+                            },
+                        }),
+                    ]}
+                    name="email"
+                    hasFeedback
+                    validateStatus={emailStatus}
+                >
                     <Input
+                        value={email}
+                        onChange={handleEmailChange}
                         type={'text'}
-                        prefix={<UserOutlined className="site-form-item-icon"/>}
-                        placeholder="用户名"/>
+                        prefix={<MailOutlined className="site-form-item-icon"/>}
+                        placeholder="邮箱"/>
                 </Form.Item>
                 <Form.Item
                     rules={[
@@ -151,38 +176,6 @@ function Register(props) {
                     rules={[
                         {
                             required: true,
-                            message: '请输入确认邮箱',
-                        },
-                        {
-                            type: 'email',
-                            message: '邮箱格式不正确'
-                        },
-                        ({getFieldValue}) => ({
-                            validator(rule, value) {
-                                if (!value || isEmail(getFieldValue('email'))) {
-                                    setEmailStatus("success");
-                                    return Promise.resolve();
-                                }
-                                setEmailStatus("error");
-                                return Promise.reject('');
-                            },
-                        }),
-                    ]}
-                    name="email"
-                    hasFeedback
-                    validateStatus={emailStatus}
-                >
-                    <Input
-                        value={email}
-                        onChange={handleEmailChange}
-                        type={'text'}
-                        prefix={<MailOutlined className="site-form-item-icon"/>}
-                        placeholder="邮箱"/>
-                </Form.Item>
-                <Form.Item
-                    rules={[
-                        {
-                            required: true,
                             message: '请输入验证码',
                         },
                     ]}
@@ -196,12 +189,9 @@ function Register(props) {
                     </div>
                 </Form.Item>
                 <Form.Item>
-                    <Button loading={loading} type="primary" htmlType="submit"
+                    <Button block loading={loading} type="primary" htmlType="submit"
                             className="login-form-button">
-                        注册
-                    </Button>
-                    <Button onClick={handleClose} className="login-form-button">
-                        取消
+                        修改密码
                     </Button>
                 </Form.Item>
             </Form>
@@ -209,4 +199,4 @@ function Register(props) {
     )
 }
 
-export default Register
+export default EditPwd

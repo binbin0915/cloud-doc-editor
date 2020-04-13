@@ -8,7 +8,7 @@ import {
     ADD_FILES,
     SAVE_FILE_TO_RAM,
     RENAME_RAM_FILE,
-    SET_LOGIN_INFO
+    SET_LOGIN_INFO, CHANGE_AUTO_SYNC
 } from './constants'
 import {array2Obj, obj2Array} from "@/utils/helper";
 
@@ -20,8 +20,17 @@ const defaultState = fromJS({
     activeFileId: getActiveFileId() || '',
     openedFileIds: getOpenedFileIds() || [],
     unSavedFileIds: getUnSavedFileIds() || [],
-    loginInfo: {}
+    loginInfo: {},
+    autoSync: getAutoSync() || false,
 });
+
+function setAutoSync(autoSync) {
+    return settingsStore.set('autoSync', autoSync)
+}
+
+function getAutoSync() {
+    return settingsStore.get('autoSync')
+}
 
 function getActiveFileId() {
     return settingsStore.get('activeFileId')
@@ -57,6 +66,11 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case CHANGE_AUTO_SYNC:
+            setAutoSync(action.payload.autoSync);
+            return state.merge({
+                autoSync: action.payload.autoSync
+            });
         case SET_LOGIN_INFO:
             return state.merge({
                 loginInfo: fromJS(action.payload.loginInfo)
@@ -66,9 +80,9 @@ export default function (state = defaultState, action) {
             let willRemoveFileId = action.payload.willRemoveFile.id;
             let willAddedFile = action.payload.willAddedFile;
             // 删去setting的
-            
+
             let {[willRemoveFileId]: willRemoveFile, ...willAddedFiles} = state.get('files').toJS();
-            
+
             let hasAddedFiles = {
                 ...willAddedFiles,
                 [willAddedFile.id]: willAddedFile

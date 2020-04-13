@@ -8,53 +8,135 @@ import BottomButton from '../BottomButton'
 import {obj2Array} from '@/utils/helper'
 import useAction from '../../hooks/useAction'
 import * as actions from '../../store/action'
-import {copyFile, readFile, writeFile} from '@/utils/fileHelper'
 import events from '@/utils/eventBus'
+import {readFile, copyFile, writeFile, deleteFile} from '@/utils/fileHelper'
 import uuidv4 from "uuid/v4";
 
 const nodePath = window.require('path');
 
 const {ipcRenderer} = window.require('electron');
 
+const {AliOSS} = require('@/utils/aliOssManager');
+const Store = window.require('electron-store');
+const settingsStore = new Store({
+    name: 'Settings'
+});
+const endpoint = settingsStore.get('endpoint');
+const access = settingsStore.get('accessKey');
+const secret = settingsStore.get('secretKey');
+const bucket = settingsStore.get('bucketName');
+
+const manager = new AliOSS({
+    accessKeyId: access,
+    endpoint: endpoint,
+    accessKeySecret: secret,
+    bucket: bucket,
+});
+
+const uploadDir = settingsStore.get('upload-dir');
+
 export default function () {
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
     const filesArr = obj2Array(files);
     const activeKey = useSelector(state => state.getIn(['App', 'activeFileId']));
+    const autoSync = useSelector(state => state.getIn(['App', 'autoSync']));
+    const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
     const {changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles} = useAction(actions);
     const openedFiles = filesArr.filter(file => openedFileIds.findIndex(id => id === file.id) !== -1);
-    const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
-    
-    console.log(loginInfo);
+
     useEffect(() => {
         events.on('delete-file', targetKey => {
             remove(targetKey)
         });
     }, []);
-    
+
+    const uploadFile = async (record) => {
+        let content = '';
+        if (record.isLoaded) {
+            content = record.body;
+        } else {
+            content = await readFile(record.filePath)
+        }
+        const pattern = /!\[(.*?)\]\((.*?)\)/mg;
+        const result = [];
+        // 提取出本地路径的图片进行上传
+        let matcher;
+
+        while ((matcher = pattern.exec(content)) !== null) {
+            if (!/https?:\/\//mg.test(matcher[2])) {
+                result.push({
+                    alt: matcher[1],
+                    url: matcher[2]
+                });
+            }
+        }
+        if (loginInfo && loginInfo.user && loginInfo.user.id) {
+            const userId = loginInfo.user.id;
+            if (result.length) {
+                let newContent = '';
+                for (let imgItem of result) {
+                    let urlArr = imgItem.url.split('/');
+                    let tempName = urlArr[urlArr.length - 1];
+                    let extname = nodePath.extname(tempName);
+                    let imgName = nodePath.basename(tempName, extname);
+                    try {
+                        await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
+                        let url = await manager.getImgUrl(`${userId}/img/${imgName}${extname}`);
+                        newContent = content.replace(pattern, `![${imgItem.alt}](${url})`);
+                    } catch (e) {
+                        // do nothing
+                    }
+                }
+                record.body = newContent;
+            }
+            // 上传文件
+            manager.uploadFile(`${userId}/${record.title}:${record.id}`, record.filePath)
+                .then(({code}) => {
+                    if (code === 0) {
+                        // 保存到本地
+                        writeFile(record.filePath, record.body)
+                            .then(() => {
+                                addFile(record);
+                                message.success('文件已保存，上传成功');
+                                // 删去本地图片
+                                result.map(async imgItem => {
+                                    let urlArr = imgItem.url.split('/');
+                                    let tempName = urlArr[urlArr.length - 1];
+                                    let filePath = nodePath.join(uploadDir, tempName);
+                                    await deleteFile(filePath)
+                                });
+                            })
+                            .catch(() => {
+                                message.error('文件已保存，上传失败');
+                            });
+                    } else {
+                        message.error('文件已保存，上传失败');
+                    }
+                });
+        }
+    };
+
     useEffect(() => {
         let activeFile = files[activeKey];
-        if (activeFile) {
-            if (!activeFile.loaded) {
-                // 读取文件
-                try {
-                    readFile(activeFile.filePath).then(data => {
-                        setFileLoaded(activeKey, data);
-                    })
-                }
-                catch (err) {
-                    // 文件已被删除
-                    message.error('文件已被删除');
-                    deleteFile(activeKey);
-                }
+        if (activeFile && !activeFile.loaded) {
+            // 读取文件
+            try {
+                readFile(activeFile.filePath).then(data => {
+                    setFileLoaded(activeKey, data, addFile);
+                })
+            } catch (err) {
+                // 文件已被删除
+                message.error('文件已被删除');
+                deleteFile(activeKey);
             }
         }
     }, [activeKey, files]);
-    
+
     const handleContentOnEdit = useCallback((targetKey, action) => {
         eval(action)(targetKey)
     }, [openedFileIds]);
-    
+
     const remove = useCallback(targetKey => {
         // let lastIndex = 0;
         const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== targetKey);
@@ -72,22 +154,20 @@ export default function () {
         if (targetKey === activeKey) {
             if (curFileIndex === 0) { // 当前激活的tab在第一个的位置，则正在编辑第二个
                 index = openedFileIds[0];
-            }
-            else { // 当前激活的tab在其他的位置，则正在编辑前一个
+            } else { // 当前激活的tab在其他的位置，则正在编辑前一个
                 index = openedFileIds[curFileIndex - 1];
             }
-        }
-        else {
+        } else {
             index = openedFileIds[curFileIndex - 1];
         }
         changeActiveKey(index);
         handleTabChange(index);
     }, [openedFileIds]);
-    
+
     const handleTabChange = useCallback(activeKey => {
         changeActiveKey(activeKey);
         let activeFile = files[activeKey];
-        if (!activeFile.loaded) {
+        if (activeFile && !activeFile.loaded) {
             readFile(activeFile.filePath)
                 .then(data => {
                     setFileLoaded(activeKey, data);
@@ -98,7 +178,7 @@ export default function () {
                 })
         }
     }, [activeKey, files, remove]);
-    
+
     const handleAddImg = useCallback(file => {
         // 上传图片到本地 static文件夹
         let fileName = copyFile(file.path);
@@ -106,54 +186,68 @@ export default function () {
         console.log(activeFile);
         activeFile.body += `![alt](/static/${fileName})`;
         saveFile(activeFile);
-        handleSave(activeFile.body);
-    });
-    
+        writeFile(activeFile.filePath, activeFile.body)
+            .then(() => {
+                if (autoSync) {
+                } else {
+                    message.success("上传图片成功");
+                }
+            })
+            .catch(() => {
+                // do nothing
+                message.error("上传图片失败")
+            });
+    }, [files, activeKey, autoSync]);
+
     const timer = useRef(null);
-    
+
     const handleValueChange = value => {
         const file = files[activeKey];
         file.body = value;
         saveFile(file);
-        
+
         if (timer.current) {
             clearTimeout(timer.current);
         }
         timer.current = setTimeout(() => {
             writeFile(file.filePath, value)
                 .then(() => {
-                    console.log('保存文件成功')
                 })
                 .catch(() => {
                     // do nothing
                 })
         }, 2000);
     };
-    
+
     const handleSave = useCallback(value => {
         writeFile(files[activeKey].filePath, value)
             .then(() => {
-                message.success("保存文件成功")
+                if (autoSync) {
+                    // TODO 执行上传文件的操作
+                    uploadFile(files[activeKey])
+                        .then(() => {});
+                } else {
+                    message.success("保存文件成功");
+                }
             })
             .catch(() => {
                 // do nothing
-                message.success("保存文件失败")
+                message.error("保存文件失败")
             })
-    }, [files, activeKey]);
-    
+    }, [files, activeKey, autoSync]);
+
     const handleDrag = e => {
         e.preventDefault()
     };
-    
+
     const handleDrop = async e => {
         let importedFiles = e.dataTransfer.files;
-        
+
         if (importedFiles.length === 1) {
             let path = importedFiles[0].path;
             if (nodePath.extname(path) !== '.md') {
                 message.error("导入的文件不是md")
-            }
-            else {
+            } else {
                 let samePathFile = filesArr.find(file => file.filePath === path);
                 if (samePathFile) {
                     message.error('文件已导入');
@@ -177,8 +271,7 @@ export default function () {
                         addFile(file);
                     });
             }
-        }
-        else {
+        } else {
             const filteredFiles = Array.from(importedFiles).filter(file => {
                 const isAlreadyAdded = filesArr.find(ramFile => {
                     return ramFile.filePath === file.path
@@ -202,7 +295,7 @@ export default function () {
             }
         }
     };
-    
+
     return (
         <React.Fragment>
             <Col className={'editor-list'} span={4}>

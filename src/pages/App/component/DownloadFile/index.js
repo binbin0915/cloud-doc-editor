@@ -1,16 +1,15 @@
 import React, {useEffect, useState, useCallback} from 'react'
 import {message, Table, Modal} from 'antd'
 import {DownloadOutlined} from '@ant-design/icons'
-import axios from '@/utils/http'
 import NotLogin from '../commonComponent/NotLogin'
-import useAction from "@/pages/App/hooks/useAction";
 import {useSelector} from "react-redux";
 import Oss from 'ali-oss'
 import {obj2Array} from "@/utils/helper";
 import './download.css'
 import {readFile, copyFile, writeFile, deleteFile, isExistSameFile} from '@/utils/fileHelper'
-import * as action from "../../store/action";
 import {timeStampToString} from '@/utils/helper'
+import useAction from "../../hooks/useAction";
+import * as action from '../../store/action'
 
 const nodePath = window.require('path');
 const {AliOSS} = require('@/utils/aliOssManager');
@@ -20,10 +19,10 @@ const settingsStore = new Store({
     name: 'Settings'
 });
 
-const region = settingsStore.get('regionId');
 const access = settingsStore.get('accessKey');
 const secret = settingsStore.get('secretKey');
 const bucket = settingsStore.get('bucketName');
+const endpoint = settingsStore.get('endpoint');
 
 const columns = [
     {
@@ -54,19 +53,18 @@ const columns = [
 ];
 const downloadLocation = settingsStore.get('savedFileLocation');
 
-
 const staticManager = new Oss({
     accessKeyId: access,
-    region: region,
+    endpoint: endpoint,
     accessKeySecret: secret,
-    bucket: bucket
+    bucket: bucket,
 });
 
 const manager = new AliOSS({
     accessKeyId: access,
-    region: region,
+    endpoint: endpoint,
     accessKeySecret: secret,
-    bucket: bucket
+    bucket: bucket,
 });
 
 const Action = ({record}) => {
@@ -117,32 +115,12 @@ const Action = ({record}) => {
     )
 };
 export default function () {
-    const [user, setUser] = useState(null);
     const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
     useEffect(() => {
-        // 查看登录与否
-        let token = settingsStore.get('token');
-        axios.post('/user/isLogin', {token})
-            .then(({code, data}) => {
-                // 用户已登陆
-                if (code === 0) {
-                    setUser(data);
-                    settingsStore.set('user', data);
-                } else {
-                    setUser(null);
-                    settingsStore.set('user', null);
-                    settingsStore.set('token', null);
-                }
-            })
-            .catch((err) => {
-                message.error('连接服务器失败')
-            })
-    }, []);
-
-    useEffect(() => {
-        if (user) {
-            const userId = settingsStore.get('user').id;
+        if (loginInfo.user) {
+            const userId = loginInfo.user.id;
             const prefix = `${userId}/`;
             staticManager.list({prefix})
                 .then(({objects}) => {
@@ -165,13 +143,14 @@ export default function () {
                     setLoading(false);
                 })
         }
-    }, [user]);
+    });
 
     return (
         <React.Fragment>
             {
-                user && user.id ? (
+                loginInfo && loginInfo.user && loginInfo.user.id ? (
                     <Table
+                        locale={{emptyText: '暂无文件可供下载'}}
                         loading={loading}
                         pagination={
                             {

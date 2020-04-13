@@ -10,8 +10,8 @@
 
 .header-right {
     display: flex;
+    flex-direction: row-reverse;
     align-items: center;
-    justify-content: space-around;
 }
 
 .header-right > span {
@@ -37,4 +37,12 @@
 
 :global .ant-tabs-bar {
     margin: 0;
+}
+
+.setting-icon-group {
+    display: flex;
+    width: 67.7%;
+    height: 100%;
+    align-items: center;
+    justify-content: space-around;
 }

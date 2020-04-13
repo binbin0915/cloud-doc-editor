@@ -7,7 +7,8 @@ import {
     ADD_FILES,
     SAVE_FILE_TO_RAM,
     RENAME_RAM_FILE,
-    SET_LOGIN_INFO
+    SET_LOGIN_INFO,
+    CHANGE_AUTO_SYNC
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -30,3 +31,5 @@ export const renameRamFile = (willRemoveFile, willAddedFile) => ({
 });
 
 export const setLoginInfo = loginInfo => ({type: SET_LOGIN_INFO, payload: {loginInfo}});
+
+export const changeAutoSync = autoSync => ({type: CHANGE_AUTO_SYNC, payload: {autoSync}});

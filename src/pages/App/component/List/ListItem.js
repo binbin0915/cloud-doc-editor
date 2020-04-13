@@ -92,7 +92,10 @@ export default function ListItem({file}) {
                         deleteFile(file.id);
                         message.success('删除成功');
                     })
-                    .catch(() => message.error('删除文件失败'))
+                    .catch((err) => {
+                        message.error('该文件已被删除');
+                        deleteFile(file.id);
+                    })
             }
         });
     }, []);
