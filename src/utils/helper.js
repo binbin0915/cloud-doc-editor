@@ -33,7 +33,7 @@ export function obj2Array(obj) {
 export function getParentNode(node, parentClassName) {
     let current = node;
     while (current !== null) {
-        if (current.classList.contains(parentClassName)) {
+        if (current && current.classList && current.classList.contains(parentClassName)) {
             return current
         }
         current = current.parentNode;

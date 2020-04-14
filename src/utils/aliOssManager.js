@@ -41,22 +41,15 @@ class AliOSS {
      * @param options
      */
     async uploadFile(key, localPath, options = {type: '.md'}) {
-        try {
-            // object表示上传到OSS的Object名称，localPath表示本地文件或者文件路径
-            let {res} = await this.client.put(`${key}${options.type}`, localPath);
-            if (res.status === 200) {
-                return new SuccessModel({
-                    msg: '上传成功'
-                })
-            } else {
-                return new FailedModel({
-                    msg: '上传失败'
-                })
-            }
-        } catch (e) {
-            console.log(e);
-            return new ErrorModel({
-                msg: '阿里云OSS服务器异常'
+        // object表示上传到OSS的Object名称，localPath表示本地文件或者文件路径
+        let {res} = await this.client.put(`${key}${options.type}`, localPath);
+        if (res.status === 200) {
+            return new SuccessModel({
+                msg: '上传成功'
+            })
+        } else {
+            return new FailedModel({
+                msg: '上传失败'
             })
         }
     }

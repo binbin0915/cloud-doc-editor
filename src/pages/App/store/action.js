@@ -8,7 +8,8 @@ import {
     SAVE_FILE_TO_RAM,
     RENAME_RAM_FILE,
     SET_LOGIN_INFO,
-    CHANGE_AUTO_SYNC
+    CHANGE_AUTO_SYNC,
+    FILELIST_CONTEXT_MENU
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -33,3 +34,5 @@ export const renameRamFile = (willRemoveFile, willAddedFile) => ({
 export const setLoginInfo = loginInfo => ({type: SET_LOGIN_INFO, payload: {loginInfo}});
 
 export const changeAutoSync = autoSync => ({type: CHANGE_AUTO_SYNC, payload: {autoSync}});
+
+export const handleContextMenu = contextMenuInfo => ({type: FILELIST_CONTEXT_MENU, payload: {contextMenuInfo}});

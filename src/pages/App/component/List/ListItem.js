@@ -23,17 +23,22 @@ const settingsStore = new Store({
 });
 const {confirm} = Modal;
 
-export default function ListItem({file}) {
+export default function ListItem({file, handleClick}) {
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
     const filesArr = obj2Array(files);
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
-    const activeFileId = useSelector(state => state.getIn(['App', 'activeFileId']));
     const [editId, setEditId] = useState('');
     const inputRef = useRef(null);
 
     const [mouseEnter, setMouseEnter] = useState(false);
-    const {changeOpenedFiles, changeActiveKey, setFileLoaded, deleteFile, addFile, renameRamFile} = useAction(actions);
+    const {deleteFile, addFile, renameRamFile, handleContextMenu} = useAction(actions);
     const [title, setTitle] = useState(file.title);
+    const renameRef = useRef(null);
+    useEffect(() => {
+        events.on('rename', file => {
+            doEdit(file)
+        })
+    }, []);
 
     const handleMouseEnter = useCallback(() => {
         setMouseEnter(true);
@@ -43,29 +48,8 @@ export default function ListItem({file}) {
         setMouseEnter(false);
     }, []);
 
-    const handleOpenFile = useCallback(e => {
-        if (!file.isNewlyCreate) {
-            const newOpenedFileIds = [...openedFileIds, file.id];
-            changeOpenedFiles(newOpenedFileIds);
-            if (!file.loaded) {
-                readFile(file.filePath)
-                    .then(data => {
-                        changeActiveKey(file.id);
-                        setFileLoaded(file.id, data);
-                    })
-                    .catch(err => {
-                        // 文件已被删除
-                        message.error('文件已被删除');
-                        deleteFile(file.id);
-                    });
-            } else {
-                changeActiveKey(file.id);
-            }
-        }
-    }, [openedFileIds, file, activeFileId]);
-
     useEffect(() => {
-        if (editId) {
+        if (editId && inputRef.current) {
             inputRef.current.focus()
         }
     }, [editId]);
@@ -105,8 +89,7 @@ export default function ListItem({file}) {
         setTitle(e.target.value);
     }, []);
 
-    const doEdit = useCallback(e => {
-        e.stopPropagation();
+    const doEdit = useCallback(file => {
         setEditId(file.id);
         setTitle(file.title);
     }, []);
@@ -222,12 +205,20 @@ export default function ListItem({file}) {
         }
     }, []);
 
+    const onContextMenu = e => {
+        if (document.querySelector('.file-list').contains(e.target)) {
+            let {clientX: left, clientY: top} = event;
+            handleContextMenu({showContextMenu: true, position: {left, top}, file})
+        }
+    };
+
     return (
         <AntList.Item
-            onClick={handleOpenFile}
+            onClick={() => handleClick(file)}
             className={'list-item'}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
+            onContextMenu={onContextMenu}
         >
             {
                 (file.id !== editId && !file.isNewlyCreate) && (
@@ -238,7 +229,10 @@ export default function ListItem({file}) {
                             {
                                 mouseEnter ? (
                                     <React.Fragment>
-                                        <EditOutlined onClick={doEdit} className={'item-icon'}/>
+                                        <EditOutlined ref={renameRef} onClick={e => {
+                                            e.stopPropagation();
+                                            doEdit(file)
+                                        }} className={'item-icon'}/>
                                         <CloseOutlined className={'item-icon'} onClick={handleFileDelete}/>
                                     </React.Fragment>
                                 ) : ''

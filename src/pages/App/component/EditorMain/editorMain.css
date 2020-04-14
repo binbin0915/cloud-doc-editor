@@ -11,6 +11,14 @@
     background: rgba(200, 200, 200, .1);
 }
 
+.context-menu {
+    height: 100%;
+}
+
+.file-context-menu {
+    background: #fff;
+}
+
 .main-pane {
     height: calc(100% - 32px);
 }
@@ -24,4 +32,8 @@
 }
 :global .ant-tabs-content {
     height: 100%;
+}
+
+:global .ant-list-bordered .ant-list-item:hover {
+    background: #f4f4f4;
 }

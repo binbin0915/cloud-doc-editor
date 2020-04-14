@@ -8,7 +8,7 @@ import {
     ADD_FILES,
     SAVE_FILE_TO_RAM,
     RENAME_RAM_FILE,
-    SET_LOGIN_INFO, CHANGE_AUTO_SYNC
+    SET_LOGIN_INFO, CHANGE_AUTO_SYNC, FILELIST_CONTEXT_MENU
 } from './constants'
 import {array2Obj, obj2Array} from "@/utils/helper";
 
@@ -22,6 +22,14 @@ const defaultState = fromJS({
     unSavedFileIds: getUnSavedFileIds() || [],
     loginInfo: {},
     autoSync: getAutoSync() || false,
+    contextMenuInfo: {
+        showContextMenu: false,
+        position: {
+            left: 0,
+            right: 0
+        },
+        file: {}
+    },
 });
 
 function setAutoSync(autoSync) {
@@ -66,6 +74,10 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case FILELIST_CONTEXT_MENU:
+            return state.merge({
+                contextMenuInfo: fromJS(action.payload.contextMenuInfo)
+            });
         case CHANGE_AUTO_SYNC:
             setAutoSync(action.payload.autoSync);
             return state.merge({

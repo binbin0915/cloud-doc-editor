@@ -27,7 +27,9 @@ const Login = () => {
                     settingsStore.set('user', data.user);
                     setLoginInfo({token: data.token, user: data.user});
                     setLoading(false);
-                    history.push('/editor')
+                    message.success('登陆成功');
+                    history.push('/editor');
+
                 } else {
                     setLoading(false);
                     message.error('用户名或密码错误');

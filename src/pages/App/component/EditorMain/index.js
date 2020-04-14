@@ -1,7 +1,7 @@
-import React, {useCallback, useEffect, useRef} from 'react'
+import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {useSelector} from 'react-redux'
 import Editor from 'for-editor'
-import {Col, message, Tabs} from 'antd'
+import {Col, List as AntList, message, Tabs} from 'antd'
 import List from '../List'
 import './editorMain.css'
 import BottomButton from '../BottomButton'
@@ -11,6 +11,7 @@ import * as actions from '../../store/action'
 import events from '@/utils/eventBus'
 import {readFile, copyFile, writeFile, deleteFile} from '@/utils/fileHelper'
 import uuidv4 from "uuid/v4";
+import {getParentNode} from "@/utils/helper";
 
 const nodePath = window.require('path');
 const fs = window.require('fs');
@@ -33,7 +34,6 @@ const manager = new AliOSS({
     accessKeySecret: secret,
     bucket: bucket,
 });
-
 const uploadDir = settingsStore.get('upload-dir');
 
 export default function () {
@@ -41,10 +41,87 @@ export default function () {
     const filesArr = obj2Array(files);
     const activeKey = useSelector(state => state.getIn(['App', 'activeFileId']));
     const autoSync = useSelector(state => state.getIn(['App', 'autoSync']));
+    const contextMenuInfo = useSelector(state => state.getIn(['App', 'contextMenuInfo'])).toJS();
     const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
-    const {changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles} = useAction(actions);
+    const {changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles, handleContextMenu} = useAction(actions);
     const openedFiles = filesArr.filter(file => openedFileIds.findIndex(id => id === file.id) !== -1);
+
+    const handleClick = useCallback(file => {
+        if (!file.isNewlyCreate) {
+            const newOpenedFileIds = [...openedFileIds.filter(id => file.id !== id), file.id];
+            changeOpenedFiles(newOpenedFileIds);
+            if (!file.loaded) {
+                readFile(file.filePath)
+                    .then(data => {
+                        changeActiveKey(file.id);
+                        setFileLoaded(file.id, data);
+                    })
+                    .catch(err => {
+                        // 文件已被删除
+                        message.error('文件已被删除');
+                        deleteFile(file.id);
+                    });
+            } else {
+                changeActiveKey(file.id);
+            }
+        }
+    }, [openedFileIds, files, activeKey]);
+
+    const ContextMenu = useCallback(({position, file}) => {
+        const contextMenuData = [
+            {
+                id: '1',
+                title: '打开',
+                onClick: function () {
+                    handleClick(file);
+                    hideContextMenu();
+                }
+            },
+            {
+                id: '2',
+                title: '在文件中打开',
+                onClick: function () {
+
+                }
+            },
+            {
+                id: '3',
+                title: '在列表中移除',
+                onClick: function () {
+
+                }
+            },
+            {
+                id: '4',
+                title: '删除',
+                onClick: function () {
+
+                }
+            },
+            {
+                id: '5',
+                title: '重命名',
+                onClick: function () {
+                    events.emit('rename', file);
+                    hideContextMenu();
+                }
+            }
+        ];
+        return (
+            <AntList
+                style={{left: position.left, top: position.top}}
+                className={'file-context-menu'}
+                dataSource={contextMenuData}
+                bordered
+                renderItem={(dataItem) => {
+                    return (
+                        <AntList.Item onClick={dataItem.onClick} className={'file-context-menu-item'}
+                                      key={dataItem.id}>{dataItem.title}</AntList.Item>
+                    )
+                }}/>
+        )
+    }, [openedFileIds, activeKey, files]);
 
     useEffect(() => {
         events.on('delete-file', targetKey => {
@@ -81,8 +158,10 @@ export default function () {
                     let tempName = urlArr[urlArr.length - 1];
                     let extname = nodePath.extname(tempName);
                     let imgName = nodePath.basename(tempName, extname);
+                    // TODO 文件不存在时的处理
                     if (!fs.existsSync(nodePath.join(uploadDir, tempName))) {
-                        return
+                        message.error(`${tempName}${extname}文件不存在`);
+                        return;
                     } else {
                         try {
                             await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
@@ -188,7 +267,6 @@ export default function () {
         // 上传图片到本地 static文件夹
         let fileName = copyFile(file.path);
         let activeFile = files[activeKey];
-        console.log(activeFile);
         activeFile.body += `![alt](/static/${fileName})`;
         saveFile(activeFile);
         writeFile(activeFile.filePath, activeFile.body)
@@ -230,7 +308,8 @@ export default function () {
                 if (autoSync) {
                     // TODO 执行上传文件的操作
                     uploadFile(files[activeKey])
-                        .then(() => {});
+                        .then(() => {
+                        });
                 } else {
                     message.success("保存文件成功");
                 }
@@ -301,14 +380,30 @@ export default function () {
         }
     };
 
+    const hideContextMenu = () => {
+        let parentNode = getParentNode(event.target, 'list-item');
+        if (parentNode) {
+
+        } else {
+            handleContextMenu({showContextMenu: false, position: {left: 0, top: 0}})
+        }
+    };
+
     return (
         <React.Fragment>
             <Col className={'editor-list'} span={4}>
-                <List files={filesArr}/>
+                <div
+                    onContextMenu={hideContextMenu}
+                    onClick={hideContextMenu}
+                    className={'context-menu'}>
+                    <List handleClick={handleClick} files={filesArr}/>
+                </div>
                 <BottomButton/>
             </Col>
             <Col className={'editor'} span={20}>
                 <div
+                    onContextMenu={hideContextMenu}
+                    onClick={hideContextMenu}
                     className="drag"
                     onDrag={handleDrag}
                     onDragOver={handleDrag}
@@ -346,6 +441,10 @@ export default function () {
                     }
                 </div>
             </Col>
+            {
+                contextMenuInfo.showContextMenu ?
+                    <ContextMenu file={contextMenuInfo.file} position={contextMenuInfo.position}/> : ''
+            }
         </React.Fragment>
     )
 }
