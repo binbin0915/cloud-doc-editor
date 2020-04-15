@@ -15,7 +15,8 @@ import {
     SET_SEARCH_TYPE,
     SET_SEARCH_FILES,
     SET_CLOUD_FILES,
-    SET_SEARCH_VALUE
+    SET_SEARCH_VALUE,
+    DELETE_CLOUD_FILE
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -54,3 +55,5 @@ export const setSearchFiles = searchFiles => ({type: SET_SEARCH_FILES, payload: 
 export const setCloudFiles = cloudFiles => ({type: SET_CLOUD_FILES, payload: {cloudFiles}});
 
 export const setSearchValue = searchValue => ({type: SET_SEARCH_VALUE, payload: {searchValue}});
+
+export const deleteCloudFile = cloudFile => ({type: DELETE_CLOUD_FILE, payload: {cloudFile}});

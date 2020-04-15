@@ -1,6 +1,6 @@
-import React, {useCallback, useEffect, useState} from 'react'
+import React, {useCallback, useState} from 'react'
 import {useHistory, useLocation} from 'react-router-dom'
-import {Col, Button, Checkbox, Dropdown, Menu, Input, Modal} from "antd";
+import {Col, Button, Checkbox, Dropdown, Menu, Input, Modal, message} from "antd";
 import {
     UserOutlined,
     EditOutlined,
@@ -64,7 +64,7 @@ export default function Header() {
             </Menu>
         )
     };
-    
+
     const handleMinimize = useCallback(() => {
         curWindow.minimize()
     }, []);
@@ -77,12 +77,11 @@ export default function Header() {
         setFullScreen(false);
         curWindow.center();
     }, [isFullScreen]);
-    
+
     const handleSearch = (value, event) => {
         if (value.trim() === '') {
             setSearchFiles([]);
-        }
-        else {
+        } else {
             let searchFiles = [];
             if (searchType === 'local') {
                 searchFiles = filesArr.filter(file => file.title.includes(value));
@@ -96,7 +95,7 @@ export default function Header() {
             setSearchFiles(searchFiles);
         }
     };
-    
+
     const UserDropItem = function () {
         const handleClick = ({item, key, keyPath, domEvent}) => {
             history.push(key);
@@ -111,6 +110,7 @@ export default function Header() {
                     setLoginInfo({});
                     settingsStore.set('token', '');
                     settingsStore.set('user', '');
+                    message.success("注销成功")
                 },
                 icon: <QuestionCircleFilled/>
             })
@@ -126,15 +126,15 @@ export default function Header() {
             </Menu>
         )
     };
-    
+
     const handleChange = useCallback(e => {
         changeAutoSync(!autoSync)
     }, [autoSync]);
-    
+
     const hideToTray = useCallback(() => {
         curWindow.hide();
     }, [hideInfo]);
-    
+
     const handleModalOpen = useCallback(() => {
         // 没有记住隐藏到托盘，打开modal
         if (!hideInfo) {
@@ -145,13 +145,12 @@ export default function Header() {
             if (isHide) {
                 // 上次记住了隐藏托盘，直接隐藏
                 hideToTray();
-            }
-            else {
+            } else {
                 curWindow.destroy();
             }
         }
     }, [hideInfo, isHide]);
-    
+
     const exitApp = useCallback(() => {
         setVisible(false);
         rememberHideToTray({
@@ -162,7 +161,7 @@ export default function Header() {
             curWindow.destroy();
         }, 200)
     }, [remember]);
-    
+
     const hideTray = useCallback(() => {
         setVisible(false);
         rememberHideToTray({
@@ -173,15 +172,15 @@ export default function Header() {
             hideToTray();
         }, 250)
     }, [remember]);
-    
+
     const onChange = useCallback((e) => {
         setRemember(e.target.checked)
     }, []);
-    
+
     const handleSearchValueChange = e => {
         setSearchValue(e.target.value);
     };
-    
+
     return (
         <React.Fragment>
             <Col className={'header-left'} span={4}>
@@ -192,9 +191,10 @@ export default function Header() {
                         </Dropdown>
                     )
                 }
-                <Input.Search value={searchValue} onChange={handleSearchValueChange} onSearch={handleSearch} className={'header-search'}/>
+                <Input.Search value={searchValue} onChange={handleSearchValueChange} onSearch={handleSearch}
+                              className={'header-search'}/>
             </Col>
-            <Col span={15}>
+            <Col span={loginInfo && loginInfo.user ? 15 : 17}>
                 <Menu
                     onClick={handleEditorClick}
                     selectedKeys={[location.pathname]}
@@ -211,15 +211,15 @@ export default function Header() {
                     </Menu.Item>
                 </Menu>
             </Col>
+            {loginInfo && loginInfo.user && loginInfo.user.id &&
             <Col span={2}>
-                {loginInfo && loginInfo.user && loginInfo.user.id &&
-                <Checkbox onChange={handleChange} checked={autoSync} className={'header-right-icon'}>自动云同步</Checkbox>}
-            </Col>
+                <Checkbox onChange={handleChange} checked={autoSync} className={'header-right-icon'}>自动云同步</Checkbox>
+            </Col>}
             <Col className={'header-right'} span={2}>
-                    <Dropdown trigger={'click'} overlay={SettingDropItem}>
-                        <MenuOutlined className={'header-right-icon'}/>
-                    </Dropdown>
-                    <LineOutlined onClick={handleMinimize} className={'header-right-icon'}/>
+                <Dropdown trigger={'click'} overlay={SettingDropItem}>
+                    <MenuOutlined className={'header-right-icon'}/>
+                </Dropdown>
+                <LineOutlined onClick={handleMinimize} className={'header-right-icon'}/>
                 {
                     isFullScreen ?
                         <FullscreenExitOutlined onClick={handleExitFullScreen} className={'header-right-icon'}/> :

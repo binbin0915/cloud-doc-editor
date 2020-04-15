@@ -69,7 +69,7 @@ app.on('ready', () => {
     mainWindow = new AppWindow(mainWindowConfig, urlLocation);
     mainWindow.center();
     setTray();
-    
+
     // 垃圾回收
     mainWindow.on('closed', e => {
         mainWindow = null;

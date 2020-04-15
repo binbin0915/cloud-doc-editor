@@ -68,7 +68,7 @@ const Action = ({record}) => {
         const result = [];
         // 提取出本地路径的图片进行上传
         let matcher;
-        
+
         while ((matcher = pattern.exec(content)) !== null) {
             if (!/https?:\/\//mg.test(matcher[2])) {
                 result.push({
@@ -145,7 +145,7 @@ export default function () {
         <React.Fragment>
             {
                 loginInfo && loginInfo.user && loginInfo.user.id ? (
-                    <Table locale={{emptyText: '暂无文件需要上传'}} pagination={
+                    <Table pagination={
                         {
                             total: filteredFiles.length,
                             pageSize: 5
@@ -161,5 +161,5 @@ export default function () {
             }
         </React.Fragment>
     )
-    
+
 }

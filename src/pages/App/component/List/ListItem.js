@@ -28,70 +28,51 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
     const filesArr = obj2Array(files);
     const [editId, setEditId] = useState('');
     const inputRef = useRef(null);
-    
+
     const [mouseEnter, setMouseEnter] = useState(false);
     const {deleteFile, addFile, renameRamFile, handleContextMenu} = useAction(actions);
     const [title, setTitle] = useState(file.title);
     const renameRef = useRef(null);
     useEffect(() => {
-        events.on('rename', file => {
+        const handler = file => {
             doEdit(file)
-        });
+        };
+        events.on('rename', handler);
+        return () => {
+            events.off('rename', handler)
+        }
     }, []);
-    
+
     const handleMouseEnter = useCallback(() => {
         setMouseEnter(true);
     }, []);
-    
+
     const handleMouseLeave = useCallback(() => {
         setMouseEnter(false);
     }, []);
-    
+
     useEffect(() => {
         if (editId && inputRef.current) {
             inputRef.current.focus()
         }
     }, [editId]);
-    
+
     useEffect(() => {
         if (file.isNewlyCreate) {
             setEditId(file.id)
         }
     }, [file.isNewlyCreate]);
-    
-    // const handleFileDelete = useCallback(file => {
-    //     handleConfirm({
-    //         title: '要删除文件吗',
-    //         content: `确定要删除${file.title}.md吗？`,
-    //         successCallback() {
-    //             // 删除文件
-    //             deleteSysFile(file.filePath)
-    //                 .then(() => {
-    //                     if (openedFileIds.includes(file.id)) {
-    //                         // 兄弟组件通信
-    //                         events.emit('delete-file', file.id);
-    //                     }
-    //                     deleteFile(file.id);
-    //                     message.success('删除成功');
-    //                 })
-    //                 .catch((err) => {
-    //                     message.error('该文件已被删除');
-    //                     deleteFile(file.id);
-    //                 })
-    //         }
-    //     });
-    // }, []);
-    
+
     const handleInputChange = useCallback(e => {
         e.stopPropagation();
         setTitle(e.target.value);
     }, []);
-    
+
     const doEdit = useCallback(file => {
         setEditId(file.id);
         setTitle(file.title);
     }, []);
-    
+
     const handleConfirm = ({title, content, successCallback}) => {
         confirm({
             title: title || '文件已存在，确定覆盖？',
@@ -106,7 +87,7 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
             },
         });
     };
-    
+
     const handleFileNameChange = useCallback(e => {
         e.stopPropagation();
         let newName = `${title}.md`;
@@ -129,16 +110,16 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                         title: '文件已存在，确定覆盖？',
                         content: `要覆盖${title}.md吗？`,
                         successCallback() {
+                            console.log(file.id);
                             // 找到内存中的相同文件名的文件
                             const ramSameFiles = filesArr.filter(file => file.filePath === newPath);
                             // 除去自己
                             const sameNameFile = ramSameFiles && ramSameFiles.find(ramFile => ramFile.id !== file.id);
-                            console.log(sameNameFile);
                             file.filePath = newPath;
                             file.title = title;
                             let isNew = file.isNewlyCreate;
                             // 磁盘上删去
-                            renameFile(filePath, newName)
+                            writeFile(filePath, file.body)
                                 .then(() => {
                                     message.success(isNew ? "新建文件成功" : "重命名文件成功");
                                     file.title = title;
@@ -146,17 +127,23 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                                     if (isNew) {
                                         file.isNewlyCreate = false;
                                     }
-                                    // 内存中删去
-                                    renameRamFile(sameNameFile, file);
+                                    // 内存中没有这个文件直接添加
+                                    if (!sameNameFile) {
+                                        addFile(file);
+                                    } else {
+                                        // 内存中删去
+                                        renameRamFile(sameNameFile, file);
+                                    }
+
                                 })
-                                .catch(() => {
+                                .catch(error => {
+                                    console.log(error);
                                     message.error(isNew ? "新建文件失败" : "重命名文件失败");
                                 });
-                            __handleClose()
+                            __handleClose();
                         }
                     });
-                }
-                else {
+                } else {
                     let isNew = file.isNewlyCreate;
                     file.title = title;
                     if (isNew) {
@@ -171,8 +158,7 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                             .catch(err => {
                                 message.error("新建文件失败");
                             })
-                    }
-                    else {
+                    } else {
                         console.log(file.filePath);
                         // 直接覆盖
                         renameFile(file.filePath, newName)
@@ -190,26 +176,26 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                 }
             })
     }, [title, files]);
-    
+
     const __handleClose = useCallback(() => {
         setEditId('');
         setTitle('');
     }, []);
-    
+
     const handleInputClose = useCallback(e => {
         e.stopPropagation();
         if (file.isNewlyCreate) {
             deleteFile(file.id);
-        }
-        else {
+        } else {
             __handleClose();
         }
     }, []);
-    
+
     const onContextMenu = e => {
         if (document.querySelector('.file-list').contains(e.target)) {
             let {clientX: left, clientY: top} = event;
-            handleContextMenu({showContextMenu: true,
+            handleContextMenu({
+                showContextMenu: true,
                 position: {
                     left,
                     top
@@ -218,7 +204,7 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
             })
         }
     };
-    
+
     return (
         <AntList.Item
             onClick={() => handleClick(file)}

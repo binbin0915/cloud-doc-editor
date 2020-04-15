@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react'
 import {message, Table, Modal} from 'antd'
-import {DownloadOutlined, DeleteOutlined} from '@ant-design/icons'
+import {DownloadOutlined, DeleteOutlined, ExclamationCircleOutlined} from '@ant-design/icons'
 import NotLogin from '../commonComponent/NotLogin'
 import {useSelector} from "react-redux";
 import Oss from 'ali-oss'
@@ -18,6 +18,7 @@ const Store = window.require('electron-store');
 const settingsStore = new Store({
     name: 'Settings'
 });
+const {confirm} = Modal;
 
 const access = settingsStore.get('accessKey');
 const secret = settingsStore.get('secretKey');
@@ -68,11 +69,11 @@ const manager = new AliOSS({
 });
 
 const Action = ({record}) => {
-    const {addFile} = useAction(action);
+    const {addFile, deleteCloudFile} = useAction(action);
     const userId = settingsStore.get('user').id;
     record.isNewlyCreate = false;
     // 查看默认下载路径是否有同名文件，若有则提示是否覆盖
-    let handleDownload = useCallback(() => {
+    const handleDownload = useCallback(() => {
         if (downloadLocation) {
             record.filePath = nodePath.join(downloadLocation, `${record.title}.md`);
             isExistSameFile(nodePath.dirname(record.filePath), `${record.title}.md`)
@@ -87,22 +88,19 @@ const Action = ({record}) => {
                                         if (code === 0) {
                                             message.success("下载成功");
                                             addFile(record);
-                                        }
-                                        else {
+                                        } else {
                                             message.error("下载失败");
                                         }
                                     })
                             }
                         })
-                    }
-                    else {
+                    } else {
                         manager.downloadFile(`${userId}/${record.title}:${record.id}`, record.filePath)
                             .then(({code}) => {
                                 if (code === 0) {
                                     message.success("下载成功");
                                     addFile(record);
-                                }
-                                else {
+                                } else {
                                     message.error("下载失败");
                                 }
                             })
@@ -113,17 +111,40 @@ const Action = ({record}) => {
                 })
         }
     }, []);
+
+    const handleFileDelete = useCallback(() => {
+        confirm({
+            title: '确定要删除云端文件吗？',
+            icon: <ExclamationCircleOutlined/>,
+            content: '删除之后无法恢复，请谨慎操作',
+            okText: '确定',
+            okType: 'danger',
+            cancelText: '取消',
+            onOk(){
+                manager.deleteFile(`${userId}/${record.title}:${record.id}`)
+                    .then(() => {
+                        deleteCloudFile(record);
+                        message.success("删除成功");
+                    })
+                    .catch(() => {
+                        message.error("服务器连接失败")
+                    })
+            },
+            onCancel() {
+                // do nothing
+            },
+        });
+    }, []);
     return (
         <React.Fragment>
             <DownloadOutlined className={'download-icon'} onClick={handleDownload}/>
-            <DeleteOutlined className={'download-icon'}/>
+            <DeleteOutlined onClick={handleFileDelete} className={'download-icon'}/>
         </React.Fragment>
     )
 };
 export default function () {
     const [loading, setLoading] = useState(true);
     const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
-    const searchValue = useSelector(state => state.getIn(['App', 'searchValue']));
     const searchFiles = useSelector(state => state.getIn(['App', 'searchFiles'])).toJS();
     const cloudFiles = useSelector(state => state.getIn(['App', 'cloudFiles'])).toJS();
     const {setSearchType, setCloudFiles, setSearchValue} = useAction(action);
@@ -156,15 +177,14 @@ export default function () {
                 })
         }
     }, []);
-    
+
     const filteredFiles = searchFiles.length ? searchFiles : cloudFiles;
-    
+
     return (
         <React.Fragment>
             {
                 loginInfo && loginInfo.user && loginInfo.user.id ? (
                     <Table
-                        locale={{emptyText: '暂无文件可供下载'}}
                         loading={loading}
                         pagination={
                             {
@@ -182,5 +202,5 @@ export default function () {
             }
         </React.Fragment>
     )
-    
+
 }

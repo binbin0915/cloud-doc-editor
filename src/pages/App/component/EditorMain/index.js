@@ -50,7 +50,7 @@ export default function () {
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
     const {removeFile, changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles, handleContextMenu} = useAction(actions);
     const openedFiles = filesArr.filter(file => openedFileIds.findIndex(id => id === file.id) !== -1);
-    
+
     const handleDeleteFile = useCallback(file => {
         confirm({
             title: '要删除文件吗',
@@ -62,10 +62,6 @@ export default function () {
             onOk() {
                 deleteSysFile(file.filePath)
                     .then(() => {
-                        if (openedFileIds.includes(file.id)) {
-                            // 兄弟组件通信
-                            events.emit('delete-file', file.id);
-                        }
                         deleteFile(file.id);
                         message.success('删除成功');
                     })
@@ -79,7 +75,7 @@ export default function () {
             },
         });
     }, []);
-    
+
     const handleClick = useCallback(file => {
         if (!file.isNewlyCreate) {
             const newOpenedFileIds = [...openedFileIds.filter(id => file.id !== id), file.id];
@@ -101,7 +97,7 @@ export default function () {
             }
         }
     }, [openedFileIds, files, activeKey]);
-    
+
     const ContextMenu = useCallback(({position, file}) => {
         const contextMenuData = [
             {
@@ -164,13 +160,13 @@ export default function () {
                 }}/>
         )
     }, [openedFileIds, activeKey, files]);
-    
+
     useEffect(() => {
         events.on('delete-file', targetKey => {
             remove(targetKey)
         });
     }, []);
-    
+
     const uploadFile = async (record) => {
         let content = '';
         if (record.isLoaded) {
@@ -183,7 +179,7 @@ export default function () {
         const result = [];
         // 提取出本地路径的图片进行上传
         let matcher;
-        
+
         while ((matcher = pattern.exec(content)) !== null) {
             if (!/https?:\/\//mg.test(matcher[2])) {
                 result.push({
@@ -246,7 +242,7 @@ export default function () {
                 });
         }
     };
-    
+
     useEffect(() => {
         let activeFile = files[activeKey];
         if (activeFile && !activeFile.loaded) {
@@ -263,11 +259,11 @@ export default function () {
             }
         }
     }, [activeKey, files]);
-    
+
     const handleContentOnEdit = useCallback((targetKey, action) => {
         eval(action)(targetKey)
     }, [openedFileIds]);
-    
+
     const remove = useCallback(targetKey => {
         // let lastIndex = 0;
         const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== targetKey);
@@ -296,7 +292,7 @@ export default function () {
         changeActiveKey(index);
         handleTabChange(index);
     }, [openedFileIds]);
-    
+
     const handleTabChange = useCallback(activeKey => {
         changeActiveKey(activeKey);
         let activeFile = files[activeKey];
@@ -311,7 +307,7 @@ export default function () {
                 })
         }
     }, [activeKey, files, remove]);
-    
+
     const handleAddImg = useCallback(file => {
         // 上传图片到本地 static文件夹
         let fileName = copyFile(file.path);
@@ -331,14 +327,14 @@ export default function () {
                 message.error("上传图片失败")
             });
     }, [files, activeKey, autoSync]);
-    
+
     const timer = useRef(null);
-    
+
     const handleValueChange = value => {
         const file = files[activeKey];
         file.body = value;
         saveFile(file);
-        
+
         if (timer.current) {
             clearTimeout(timer.current);
         }
@@ -351,7 +347,7 @@ export default function () {
                 })
         }, 2000);
     };
-    
+
     const handleSave = useCallback(value => {
         writeFile(files[activeKey].filePath, value)
             .then(() => {
@@ -370,14 +366,14 @@ export default function () {
                 message.error("保存文件失败")
             })
     }, [files, activeKey, autoSync]);
-    
+
     const handleDrag = e => {
         e.preventDefault()
     };
-    
+
     const handleDrop = async e => {
         let importedFiles = e.dataTransfer.files;
-        
+
         if (importedFiles.length === 1) {
             let path = importedFiles[0].path;
             if (nodePath.extname(path) !== '.md') {
@@ -432,11 +428,11 @@ export default function () {
             }
         }
     };
-    
+
     const hideContextMenu = () => {
         let parentNode = getParentNode(event.target, 'list-item');
         if (parentNode) {
-        
+
         }
         else {
             handleContextMenu({
@@ -448,9 +444,9 @@ export default function () {
             })
         }
     };
-    
+
     const filteredFiles = searchFiles.length ? searchFiles : filesArr;
-    
+
     return (
         <React.Fragment>
             <Col className={'editor-list'} span={4}>

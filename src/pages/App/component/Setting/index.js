@@ -30,21 +30,23 @@ export default function () {
     console.log(location);
     return (
         <React.Fragment>
-            <div className={'setting-main'}>
-                <Menu className={'setting-menu'} mode="horizontal" onClick={handleClick} selectedKeys={[location.pathname]}>
-                    {
-                        links.map(item => <Menu.Item key={item.to}>
-                            {item.title}
-                        </Menu.Item>)
-                    }
-                </Menu>
-                <Switch>
-                    <Route path={'/setting/login'} component={Login}/>
-                    <Route path={'/setting/settings'} component={Setting}/>
-                    <Route path={'/setting/register'} component={Register}/>
-                    <Redirect to={'/setting/login'}/>
-                </Switch>
-            </div>
+            <Col span={16} className={'setting-con'}>
+                <div className={'setting-main'}>
+                    <Menu className={'setting-menu'} mode="horizontal" onClick={handleClick} selectedKeys={[location.pathname]}>
+                        {
+                            links.map(item => <Menu.Item key={item.to}>
+                                {item.title}
+                            </Menu.Item>)
+                        }
+                    </Menu>
+                    <Switch>
+                        <Route path={'/setting/login'} component={Login}/>
+                        <Route path={'/setting/settings'} component={Setting}/>
+                        <Route path={'/setting/register'} component={Register}/>
+                        <Redirect to={'/setting/login'}/>
+                    </Switch>
+                </div>
+            </Col>
         </React.Fragment>
     )
 }

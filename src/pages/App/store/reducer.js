@@ -16,7 +16,8 @@ import {
     SET_SEARCH_TYPE,
     SET_CLOUD_FILES,
     SET_SEARCH_FILES,
-    SET_SEARCH_VALUE
+    SET_SEARCH_VALUE,
+    DELETE_CLOUD_FILE
 } from './constants'
 import {array2Obj, obj2Array} from "@/utils/helper";
 
@@ -103,6 +104,11 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case DELETE_CLOUD_FILE:
+            let newCloudFiles = state.get('cloudFiles').toJS().filter(file => file.id !== action.payload.cloudFile.id);
+            return state.merge({
+                cloudFiles: fromJS(newCloudFiles),
+            });
         case SET_SEARCH_VALUE:
             return state.merge({
                 searchValue: action.payload.searchValue,
@@ -150,9 +156,8 @@ export default function (state = defaultState, action) {
             let willRemoveFileId = action.payload.willRemoveFile.id;
             let willAddedFile = action.payload.willAddedFile;
             // 删去setting的
-            
+
             let {[willRemoveFileId]: willRemoveFile, ...willAddedFiles} = state.get('files').toJS();
-            
             let hasAddedFiles = {
                 ...willAddedFiles,
                 [willAddedFile.id]: willAddedFile

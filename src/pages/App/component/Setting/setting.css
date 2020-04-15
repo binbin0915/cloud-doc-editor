@@ -1,7 +1,15 @@
-.setting-main {
-    width: 20%;
-    margin: 5rem auto;
+.setting-con {
+    margin: 0 auto;
 }
+
+
+.setting-main {
+    width: 30%;
+    margin-top: 5%;
+    margin-left: 38%;
+}
+
+
 
 .login-area {
     width: 100%;
