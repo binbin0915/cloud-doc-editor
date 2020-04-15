@@ -62,7 +62,7 @@ app.on('ready', () => {
         width: 1366,
         height: 768,
         // transparent: true,
-        // frame: false
+        frame: false
     };
     // 判断生成环境还是线上环境
     const urlLocation = isDev ? 'http://localhost:3000/App.html' : `file://${path.join(__dirname, './dist/App.html')}`;

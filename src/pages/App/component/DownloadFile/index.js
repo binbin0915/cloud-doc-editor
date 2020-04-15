@@ -157,15 +157,7 @@ export default function () {
         }
     }, []);
     
-    const [filteredFiles, setFiles] = useState([]);
-    
-    useEffect(() => {
-        if (searchFiles.length) {
-            setFiles(searchFiles)
-        } else {
-            setFiles(cloudFiles)
-        }
-    }, [searchFiles]);
+    const filteredFiles = searchFiles.length ? searchFiles : cloudFiles;
     
     return (
         <React.Fragment>
