@@ -7,3 +7,13 @@
     cursor: pointer;
     font-size: 20px;
 }
+
+.ant-table-container table > thead > tr:first-child th:last-child {
+    text-align: center;
+}
+
+.ant-table-tbody > tr > td:last-child {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}

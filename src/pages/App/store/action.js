@@ -9,7 +9,13 @@ import {
     RENAME_RAM_FILE,
     SET_LOGIN_INFO,
     CHANGE_AUTO_SYNC,
-    FILELIST_CONTEXT_MENU
+    FILELIST_CONTEXT_MENU,
+    REMOVE_FILE,
+    REMEMBER_HIDE,
+    SET_SEARCH_TYPE,
+    SET_SEARCH_FILES,
+    SET_CLOUD_FILES,
+    SET_SEARCH_VALUE
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -36,3 +42,15 @@ export const setLoginInfo = loginInfo => ({type: SET_LOGIN_INFO, payload: {login
 export const changeAutoSync = autoSync => ({type: CHANGE_AUTO_SYNC, payload: {autoSync}});
 
 export const handleContextMenu = contextMenuInfo => ({type: FILELIST_CONTEXT_MENU, payload: {contextMenuInfo}});
+
+export const removeFile = file => ({type: REMOVE_FILE, payload: {file}});
+
+export const rememberHideToTray = ({hideInfo, isHide}) => ({type: REMEMBER_HIDE, payload: {hideInfo, isHide}});
+
+export const setSearchType = searchType => ({type: SET_SEARCH_TYPE, payload: {searchType}});
+
+export const setSearchFiles = searchFiles => ({type: SET_SEARCH_FILES, payload: {searchFiles}});
+
+export const setCloudFiles = cloudFiles => ({type: SET_CLOUD_FILES, payload: {cloudFiles}});
+
+export const setSearchValue = searchValue => ({type: SET_SEARCH_VALUE, payload: {searchValue}});

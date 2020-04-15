@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useEffect} from 'react'
 import {Table, message} from 'antd'
 import {UploadOutlined} from '@ant-design/icons'
 import NotLogin from '../commonComponent/NotLogin'
@@ -60,14 +60,15 @@ const Action = ({record}) => {
         let content = '';
         if (record.isLoaded) {
             content = record.body;
-        } else {
+        }
+        else {
             content = await readFile(record.filePath)
         }
         const pattern = /!\[(.*?)\]\((.*?)\)/mg;
         const result = [];
         // 提取出本地路径的图片进行上传
         let matcher;
-
+        
         while ((matcher = pattern.exec(content)) !== null) {
             if (!/https?:\/\//mg.test(matcher[2])) {
                 result.push({
@@ -89,7 +90,8 @@ const Action = ({record}) => {
                         await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
                         let url = await manager.getImgUrl(`${userId}/img/${imgName}${extname}`);
                         newContent = content.replace(pattern, `![${imgItem.alt}](${url})`);
-                    } catch (e) {
+                    }
+                    catch (e) {
                         // do nothing
                     }
                 }
@@ -115,7 +117,8 @@ const Action = ({record}) => {
                             .catch(() => {
                                 message.error('上传失败');
                             });
-                    } else {
+                    }
+                    else {
                         message.error('上传失败');
                     }
                 });
@@ -128,21 +131,29 @@ const Action = ({record}) => {
 
 export default function () {
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
+    const searchFiles = useSelector(state => state.getIn(['App', 'searchFiles'])).toJS();
     const filesArr = obj2Array(files);
     const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
+    const {setSearchType, setSearchValue} = useAction(action);
+    useEffect(() => {
+        setSearchType('local');
+        setSearchValue('');
+    }, []);
+    console.log(searchFiles);
+    const filteredFiles = searchFiles.length ? searchFiles : filesArr;
     return (
         <React.Fragment>
             {
                 loginInfo && loginInfo.user && loginInfo.user.id ? (
                     <Table locale={{emptyText: '暂无文件需要上传'}} pagination={
                         {
-                            total: filesArr.length,
+                            total: filteredFiles.length,
                             pageSize: 5
                         }
                     }
                            className={'local-file-list'}
                            rowKey={record => record.id}
-                           dataSource={filesArr}
+                           dataSource={filteredFiles}
                            columns={columns}/>
                 ) : (
                     <NotLogin text={'你还未登录'}/>
@@ -150,5 +161,5 @@ export default function () {
             }
         </React.Fragment>
     )
-
+    
 }

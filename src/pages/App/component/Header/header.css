@@ -5,13 +5,15 @@
 }
 
 .header-search {
-    width: 12rem;
+    width: 70%;
 }
 
 .header-right {
     display: flex;
-    flex-direction: row-reverse;
     align-items: center;
+    justify-content: space-between;
+    margin-left: 2.5%;
+
 }
 
 .header-right > span {
@@ -25,6 +27,11 @@
 .header-menu {
     text-align: center;
     border-bottom: none;
+    -webkit-app-region: drag
+}
+
+.no-drag {
+    -webkit-app-region: no-drag
 }
 
 .header-menu span {

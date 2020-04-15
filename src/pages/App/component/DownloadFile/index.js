@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react'
 import {message, Table, Modal} from 'antd'
-import {DownloadOutlined} from '@ant-design/icons'
+import {DownloadOutlined, DeleteOutlined} from '@ant-design/icons'
 import NotLogin from '../commonComponent/NotLogin'
 import {useSelector} from "react-redux";
 import Oss from 'ali-oss'
@@ -87,19 +87,22 @@ const Action = ({record}) => {
                                         if (code === 0) {
                                             message.success("下载成功");
                                             addFile(record);
-                                        } else {
+                                        }
+                                        else {
                                             message.error("下载失败");
                                         }
                                     })
                             }
                         })
-                    } else {
+                    }
+                    else {
                         manager.downloadFile(`${userId}/${record.title}:${record.id}`, record.filePath)
                             .then(({code}) => {
                                 if (code === 0) {
                                     message.success("下载成功");
                                     addFile(record);
-                                } else {
+                                }
+                                else {
                                     message.error("下载失败");
                                 }
                             })
@@ -111,14 +114,22 @@ const Action = ({record}) => {
         }
     }, []);
     return (
-        <DownloadOutlined className={'download-icon'} onClick={handleDownload}/>
+        <React.Fragment>
+            <DownloadOutlined className={'download-icon'} onClick={handleDownload}/>
+            <DeleteOutlined className={'download-icon'}/>
+        </React.Fragment>
     )
 };
 export default function () {
-    const [files, setFiles] = useState([]);
     const [loading, setLoading] = useState(true);
     const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
+    const searchValue = useSelector(state => state.getIn(['App', 'searchValue']));
+    const searchFiles = useSelector(state => state.getIn(['App', 'searchFiles'])).toJS();
+    const cloudFiles = useSelector(state => state.getIn(['App', 'cloudFiles'])).toJS();
+    const {setSearchType, setCloudFiles, setSearchValue} = useAction(action);
     useEffect(() => {
+        setSearchType('cloud');
+        setSearchValue('');
         if (loginInfo.user) {
             const userId = loginInfo.user.id;
             const prefix = `${userId}/`;
@@ -135,16 +146,27 @@ export default function () {
                             mdArr.push({
                                 id,
                                 title,
-                                serverUpdatedAt
+                                serverUpdatedAt,
+                                isNewlyCreate: false
                             });
                         }
                     });
-                    setFiles(mdArr);
+                    setCloudFiles(mdArr);
                     setLoading(false);
                 })
         }
     }, []);
-
+    
+    const [filteredFiles, setFiles] = useState([]);
+    
+    useEffect(() => {
+        if (searchFiles.length) {
+            setFiles(searchFiles)
+        } else {
+            setFiles(cloudFiles)
+        }
+    }, [searchFiles]);
+    
     return (
         <React.Fragment>
             {
@@ -154,13 +176,13 @@ export default function () {
                         loading={loading}
                         pagination={
                             {
-                                total: files.length,
+                                total: filteredFiles.length,
                                 pageSize: 5
                             }
                         }
                         className={'cloud-file-list'}
                         rowKey={record => record.id}
-                        dataSource={files}
+                        dataSource={filteredFiles}
                         columns={columns}/>
                 ) : (
                     <NotLogin text={'你还未登录'}/>
@@ -168,5 +190,5 @@ export default function () {
             }
         </React.Fragment>
     )
-
+    
 }

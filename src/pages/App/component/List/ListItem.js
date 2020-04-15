@@ -23,13 +23,12 @@ const settingsStore = new Store({
 });
 const {confirm} = Modal;
 
-export default function ListItem({file, handleClick}) {
+export default function ListItem({file, handleClick, handleDeleteFile}) {
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
     const filesArr = obj2Array(files);
-    const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
     const [editId, setEditId] = useState('');
     const inputRef = useRef(null);
-
+    
     const [mouseEnter, setMouseEnter] = useState(false);
     const {deleteFile, addFile, renameRamFile, handleContextMenu} = useAction(actions);
     const [title, setTitle] = useState(file.title);
@@ -37,63 +36,62 @@ export default function ListItem({file, handleClick}) {
     useEffect(() => {
         events.on('rename', file => {
             doEdit(file)
-        })
+        });
     }, []);
-
+    
     const handleMouseEnter = useCallback(() => {
         setMouseEnter(true);
     }, []);
-
+    
     const handleMouseLeave = useCallback(() => {
         setMouseEnter(false);
     }, []);
-
+    
     useEffect(() => {
         if (editId && inputRef.current) {
             inputRef.current.focus()
         }
     }, [editId]);
-
+    
     useEffect(() => {
         if (file.isNewlyCreate) {
             setEditId(file.id)
         }
     }, [file.isNewlyCreate]);
-
-    const handleFileDelete = useCallback(e => {
-        e.stopPropagation();
-        handleConfirm({
-            title: '要删除文件吗',
-            content: `确定要删除${file.title}.md吗？`,
-            successCallback() {
-                // 删除文件
-                deleteSysFile(file.filePath)
-                    .then(() => {
-                        if (openedFileIds.includes(file.id)) {
-                            // 兄弟组件通信
-                            events.emit('delete-file', file.id);
-                        }
-                        deleteFile(file.id);
-                        message.success('删除成功');
-                    })
-                    .catch((err) => {
-                        message.error('该文件已被删除');
-                        deleteFile(file.id);
-                    })
-            }
-        });
-    }, []);
-
+    
+    // const handleFileDelete = useCallback(file => {
+    //     handleConfirm({
+    //         title: '要删除文件吗',
+    //         content: `确定要删除${file.title}.md吗？`,
+    //         successCallback() {
+    //             // 删除文件
+    //             deleteSysFile(file.filePath)
+    //                 .then(() => {
+    //                     if (openedFileIds.includes(file.id)) {
+    //                         // 兄弟组件通信
+    //                         events.emit('delete-file', file.id);
+    //                     }
+    //                     deleteFile(file.id);
+    //                     message.success('删除成功');
+    //                 })
+    //                 .catch((err) => {
+    //                     message.error('该文件已被删除');
+    //                     deleteFile(file.id);
+    //                 })
+    //         }
+    //     });
+    // }, []);
+    
     const handleInputChange = useCallback(e => {
         e.stopPropagation();
         setTitle(e.target.value);
     }, []);
-
+    
     const doEdit = useCallback(file => {
         setEditId(file.id);
         setTitle(file.title);
     }, []);
-
+    
     const handleConfirm = ({title, content, successCallback}) => {
         confirm({
             title: title || '文件已存在，确定覆盖？',
@@ -108,7 +106,7 @@ export default function ListItem({file, handleClick}) {
             },
         });
     };
-
+    
     const handleFileNameChange = useCallback(e => {
         e.stopPropagation();
         let newName = `${title}.md`;
@@ -157,7 +155,8 @@ export default function ListItem({file, handleClick}) {
                             __handleClose()
                         }
                     });
-                } else {
+                }
+                else {
                     let isNew = file.isNewlyCreate;
                     file.title = title;
                     if (isNew) {
@@ -172,7 +171,8 @@ export default function ListItem({file, handleClick}) {
                             .catch(err => {
                                 message.error("新建文件失败");
                             })
-                    } else {
+                    }
+                    else {
                         console.log(file.filePath);
                         // 直接覆盖
                         renameFile(file.filePath, newName)
@@ -190,28 +190,35 @@ export default function ListItem({file, handleClick}) {
                 }
             })
     }, [title, files]);
-
+    
     const __handleClose = useCallback(() => {
         setEditId('');
         setTitle('');
     }, []);
-
+    
     const handleInputClose = useCallback(e => {
         e.stopPropagation();
         if (file.isNewlyCreate) {
             deleteFile(file.id);
-        } else {
+        }
+        else {
             __handleClose();
         }
     }, []);
-
+    
     const onContextMenu = e => {
         if (document.querySelector('.file-list').contains(e.target)) {
             let {clientX: left, clientY: top} = event;
-            handleContextMenu({showContextMenu: true, position: {left, top}, file})
+            handleContextMenu({showContextMenu: true,
+                position: {
+                    left,
+                    top
+                },
+                file
+            })
         }
     };
-
+    
     return (
         <AntList.Item
             onClick={() => handleClick(file)}
@@ -233,7 +240,10 @@ export default function ListItem({file, handleClick}) {
                                             e.stopPropagation();
                                             doEdit(file)
                                         }} className={'item-icon'}/>
-                                        <CloseOutlined className={'item-icon'} onClick={handleFileDelete}/>
+                                        <CloseOutlined className={'item-icon'} onClick={e => {
+                                            e.stopPropagation();
+                                            handleDeleteFile(file)
+                                        }}/>
                                     </React.Fragment>
                                 ) : ''
                             }

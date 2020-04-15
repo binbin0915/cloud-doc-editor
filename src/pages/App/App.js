@@ -19,7 +19,7 @@ const token =  settingsStore.get('token');
 export default function App() {
     const defaultSavedFileLocation = path.join(remote.app.getPath('documents'), 'markdown');
     const fileDownloadPath = remote.app.getPath('downloads');
-    const {setLoginInfo, changeAutoSync} = useAction(action);
+    const {setLoginInfo, changeAutoSync, setSearchType} = useAction(action);
     if (!settingsStore.get('savedFileLocation')) {
         settingsStore.set('savedFileLocation', defaultSavedFileLocation);
     }
@@ -36,13 +36,16 @@ export default function App() {
                     changeAutoSync(false);
                 }
             })
-            .catch(() => message.error('连接服务器失败'))
+            .catch(() => message.error('连接服务器失败'));
+        setSearchType('local');
     }, []);
     return (
         <React.Fragment>
-            <Row className={'editor-header'}>
-                <Header/>
-            </Row>
+            <div onContextMenu={e => false}>
+                <Row className={'editor-header'}>
+                    <Header />
+                </Row>
+            </div>
             <Row className={'editor-main'}>
                 <Suspense fallback={<Spin className={'router-spin'} size={'large'}/>}>
                     <Switch>

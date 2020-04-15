@@ -8,7 +8,15 @@ import {
     ADD_FILES,
     SAVE_FILE_TO_RAM,
     RENAME_RAM_FILE,
-    SET_LOGIN_INFO, CHANGE_AUTO_SYNC, FILELIST_CONTEXT_MENU
+    SET_LOGIN_INFO,
+    CHANGE_AUTO_SYNC,
+    FILELIST_CONTEXT_MENU,
+    REMOVE_FILE,
+    REMEMBER_HIDE,
+    SET_SEARCH_TYPE,
+    SET_CLOUD_FILES,
+    SET_SEARCH_FILES,
+    SET_SEARCH_VALUE
 } from './constants'
 import {array2Obj, obj2Array} from "@/utils/helper";
 
@@ -17,6 +25,7 @@ const {fileStore, settingsStore} = require('@/utils/store');
 const defaultState = fromJS({
     files: getFiles() || {},
     searchFiles: [],
+    cloudFiles: [],
     activeFileId: getActiveFileId() || '',
     openedFileIds: getOpenedFileIds() || [],
     unSavedFileIds: getUnSavedFileIds() || [],
@@ -30,7 +39,27 @@ const defaultState = fromJS({
         },
         file: {}
     },
+    hideInfo: getHideInfo() || false,
+    isHide: getIsHide() || false,
+    searchType: 'local',
+    searchValue: ''
 });
+
+function setIsHide(isHide) {
+    return settingsStore.set('isHide', isHide)
+}
+
+function getIsHide() {
+    return settingsStore.get('isHide')
+}
+
+function setHideInfo(hideInfo) {
+    return settingsStore.set('hideInfo', hideInfo)
+}
+
+function getHideInfo() {
+    return settingsStore.get('hideInfo')
+}
 
 function setAutoSync(autoSync) {
     return settingsStore.set('autoSync', autoSync)
@@ -74,6 +103,35 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case SET_SEARCH_VALUE:
+            return state.merge({
+                searchValue: action.payload.searchValue,
+            });
+        case SET_SEARCH_FILES:
+            return state.merge({
+                searchFiles: fromJS(action.payload.searchFiles),
+            });
+        case SET_CLOUD_FILES:
+            return state.merge({
+                cloudFiles: fromJS(action.payload.cloudFiles),
+            });
+        case SET_SEARCH_TYPE:
+            return state.merge({
+                searchType: action.payload.searchType,
+            });
+        case REMEMBER_HIDE:
+            setHideInfo(action.payload.hideInfo);
+            setIsHide(action.payload.isHide);
+            return state.merge({
+                hideInfo: action.payload.hideInfo,
+                isHide: action.payload.isHide
+            });
+        case REMOVE_FILE:
+            let {[action.payload.file.id]: willRemovedFile, ...removedFile} = state.get('files').toJS();
+            setFiles(removedFile);
+            return state.merge({
+               files: fromJS(removedFile)
+            });
         case FILELIST_CONTEXT_MENU:
             return state.merge({
                 contextMenuInfo: fromJS(action.payload.contextMenuInfo)
@@ -92,9 +150,9 @@ export default function (state = defaultState, action) {
             let willRemoveFileId = action.payload.willRemoveFile.id;
             let willAddedFile = action.payload.willAddedFile;
             // 删去setting的
-
+            
             let {[willRemoveFileId]: willRemoveFile, ...willAddedFiles} = state.get('files').toJS();
-
+            
             let hasAddedFiles = {
                 ...willAddedFiles,
                 [willAddedFile.id]: willAddedFile

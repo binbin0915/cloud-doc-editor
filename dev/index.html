@@ -10,4 +10,13 @@
 <body>
     <div id="root"></div>
 </body>
+<script>
+function fontSize() {
+    var deviceWidth = document.documentElement.clientWidth > 768 ? 768 : document.documentElement.clientWidth;
+    document.documentElement.style.fontSize = (deviceWidth / 25) + "px";
+}
+
+fontSize();
+window.onresize = fontSize;
+</script>
 </html>
