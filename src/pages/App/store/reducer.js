@@ -17,7 +17,8 @@ import {
     SET_CLOUD_FILES,
     SET_SEARCH_FILES,
     SET_SEARCH_VALUE,
-    DELETE_CLOUD_FILE
+    DELETE_CLOUD_FILE,
+    TAB_CONTEXT_MENU
 } from './constants'
 import {array2Obj, obj2Array} from "@/utils/helper";
 
@@ -33,6 +34,14 @@ const defaultState = fromJS({
     loginInfo: {},
     autoSync: getAutoSync() || false,
     contextMenuInfo: {
+        showContextMenu: false,
+        position: {
+            left: 0,
+            right: 0
+        },
+        file: {}
+    },
+    tabContextMenuInfo: {
         showContextMenu: false,
         position: {
             left: 0,
@@ -104,6 +113,10 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case TAB_CONTEXT_MENU:
+            return state.merge({
+                tabContextMenuInfo: fromJS(action.payload.tabContextMenuInfo)
+            });
         case DELETE_CLOUD_FILE:
             let newCloudFiles = state.get('cloudFiles').toJS().filter(file => file.id !== action.payload.cloudFile.id);
             return state.merge({

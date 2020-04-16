@@ -16,7 +16,8 @@ import {
     SET_SEARCH_FILES,
     SET_CLOUD_FILES,
     SET_SEARCH_VALUE,
-    DELETE_CLOUD_FILE
+    DELETE_CLOUD_FILE,
+    TAB_CONTEXT_MENU
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -57,3 +58,5 @@ export const setCloudFiles = cloudFiles => ({type: SET_CLOUD_FILES, payload: {cl
 export const setSearchValue = searchValue => ({type: SET_SEARCH_VALUE, payload: {searchValue}});
 
 export const deleteCloudFile = cloudFile => ({type: DELETE_CLOUD_FILE, payload: {cloudFile}});
+
+export const handleTabContextMenu = tabContextMenuInfo => ({type: TAB_CONTEXT_MENU, payload: {tabContextMenuInfo}});

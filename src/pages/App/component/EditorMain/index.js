@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react'
+import React, {useCallback, useEffect, useRef} from 'react'
 import {useSelector} from 'react-redux'
 import Editor from 'for-editor'
 import {Col, List as AntList, message, Modal, Tabs} from 'antd'
@@ -12,7 +12,7 @@ import events from '@/utils/eventBus'
 import {readFile, copyFile, writeFile, deleteFile as deleteSysFile} from '@/utils/fileHelper'
 import uuidv4 from "uuid/v4";
 import {getParentNode} from "@/utils/helper";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
+import {ExclamationCircleOutlined, CloseOutlined} from "@ant-design/icons";
 
 const nodePath = window.require('path');
 const fs = window.require('fs');
@@ -46,9 +46,10 @@ export default function () {
     const activeKey = useSelector(state => state.getIn(['App', 'activeFileId']));
     const autoSync = useSelector(state => state.getIn(['App', 'autoSync']));
     const contextMenuInfo = useSelector(state => state.getIn(['App', 'contextMenuInfo'])).toJS();
+    const tabContextMenuInfo = useSelector(state => state.getIn(['App', 'tabContextMenuInfo'])).toJS();
     const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
-    const {removeFile, changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles, handleContextMenu} = useAction(actions);
+    const {removeFile, changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles, handleContextMenu, handleTabContextMenu} = useAction(actions);
     const openedFiles = filesArr.filter(file => openedFileIds.findIndex(id => id === file.id) !== -1);
 
     const handleDeleteFile = useCallback(file => {
@@ -91,14 +92,13 @@ export default function () {
                         message.error('文件已被删除');
                         deleteFile(file.id);
                     });
-            }
-            else {
+            } else {
                 changeActiveKey(file.id);
             }
         }
     }, [openedFileIds, files, activeKey]);
 
-    const ContextMenu = useCallback(({position, file}) => {
+    const FileContextMenu = useCallback(({position, file}) => {
         const contextMenuData = [
             {
                 id: '1',
@@ -161,6 +161,48 @@ export default function () {
         )
     }, [openedFileIds, activeKey, files]);
 
+    const TabContextMenu = useCallback(({position, file}) => {
+        const contextMenuData = [
+            {
+                id: '1',
+                title: '关闭',
+            },
+            {
+                id: '2',
+                title: '关闭所有',
+            },
+            {
+                id: '3',
+                title: '关闭左侧',
+            },
+            {
+                id: '4',
+                title: '关闭右侧',
+            },
+            {
+                id: '5',
+                title: '关闭其他',
+            }
+        ];
+        return (
+            <AntList
+                style={{
+                    left: position.left,
+                    top: position.top
+                }}
+                className={'file-context-menu'}
+                dataSource={contextMenuData}
+                bordered
+                renderItem={(dataItem) => {
+                    return (
+                        <AntList.Item
+                            className={'file-context-menu-item'}
+                            key={dataItem.id}>{dataItem.title}</AntList.Item>
+                    )
+                }}/>
+        )
+    }, [openedFileIds, files, activeKey]);
+
     useEffect(() => {
         events.on('delete-file', targetKey => {
             remove(targetKey)
@@ -171,8 +213,7 @@ export default function () {
         let content = '';
         if (record.isLoaded) {
             content = record.body;
-        }
-        else {
+        } else {
             content = await readFile(record.filePath)
         }
         const pattern = /!\[(.*?)\]\((.*?)\)/mg;
@@ -201,14 +242,12 @@ export default function () {
                     if (!fs.existsSync(nodePath.join(uploadDir, tempName))) {
                         message.error(`${tempName}${extname}文件不存在`);
                         return;
-                    }
-                    else {
+                    } else {
                         try {
                             await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
                             let url = await manager.getImgUrl(`${userId}/img/${imgName}${extname}`);
                             newContent = content.replace(pattern, `![${imgItem.alt}](${url})`);
-                        }
-                        catch (e) {
+                        } catch (e) {
                             // do nothing
                         }
                     }
@@ -235,8 +274,7 @@ export default function () {
                             .catch(() => {
                                 message.error('文件已保存，上传失败');
                             });
-                    }
-                    else {
+                    } else {
                         message.error('文件已保存，上传失败');
                     }
                 });
@@ -251,8 +289,7 @@ export default function () {
                 readFile(activeFile.filePath).then(data => {
                     setFileLoaded(activeKey, data, addFile);
                 })
-            }
-            catch (err) {
+            } catch (err) {
                 // 文件已被删除
                 message.error('文件已被删除');
                 deleteFile(activeKey);
@@ -264,34 +301,33 @@ export default function () {
         eval(action)(targetKey)
     }, [openedFileIds]);
 
+    // TODO remove有问题
     const remove = useCallback(targetKey => {
         // let lastIndex = 0;
         const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== targetKey);
+        console.log(newOpenedFileIds);
+        let curFileIndex = openedFileIds.findIndex(fileId => targetKey === fileId);
         changeOpenedFiles(newOpenedFileIds);
         if (newOpenedFileIds.length === 0) {
             changeActiveKey('');
             return
         }
-        let curFileIndex = openedFileIds.findIndex(fileId => targetKey === fileId);
-        let index;
+        let key;
         if (newOpenedFileIds.length === 1) {
-            index = openedFileIds[0];
+            key = newOpenedFileIds[0];
         }
         // 关闭的是已激活的tab
         if (targetKey === activeKey) {
             if (curFileIndex === 0) { // 当前激活的tab在第一个的位置，则正在编辑第二个
-                index = openedFileIds[0];
-            }
-            else { // 当前激活的tab在其他的位置，则正在编辑前一个
-                index = openedFileIds[curFileIndex - 1];
+                key = newOpenedFileIds[0];
+            } else { // 当前激活的tab在其他的位置，则正在编辑前一个
+                key = newOpenedFileIds[curFileIndex - 1];
             }
         }
-        else {
-            index = openedFileIds[curFileIndex - 1];
-        }
-        changeActiveKey(index);
-        handleTabChange(index);
-    }, [openedFileIds]);
+        // console.log(newOpenedFileIds, key);
+        // changeActiveKey(key);
+        handleTabChange(key);
+    }, [openedFileIds, activeKey]);
 
     const handleTabChange = useCallback(activeKey => {
         changeActiveKey(activeKey);
@@ -317,8 +353,7 @@ export default function () {
         writeFile(activeFile.filePath, activeFile.body)
             .then(() => {
                 if (autoSync) {
-                }
-                else {
+                } else {
                     message.success("上传图片成功");
                 }
             })
@@ -356,8 +391,7 @@ export default function () {
                     uploadFile(files[activeKey])
                         .then(() => {
                         });
-                }
-                else {
+                } else {
                     message.success("保存文件成功");
                 }
             })
@@ -378,8 +412,7 @@ export default function () {
             let path = importedFiles[0].path;
             if (nodePath.extname(path) !== '.md') {
                 message.error("导入的文件不是md")
-            }
-            else {
+            } else {
                 let samePathFile = filesArr.find(file => file.filePath === path);
                 if (samePathFile) {
                     message.error('文件已导入');
@@ -403,8 +436,7 @@ export default function () {
                         addFile(file);
                     });
             }
-        }
-        else {
+        } else {
             const filteredFiles = Array.from(importedFiles).filter(file => {
                 const isAlreadyAdded = filesArr.find(ramFile => {
                     return ramFile.filePath === file.path
@@ -429,12 +461,11 @@ export default function () {
         }
     };
 
-    const hideContextMenu = () => {
+    const hideContextMenu = event => {
         let parentNode = getParentNode(event.target, 'list-item');
         if (parentNode) {
 
-        }
-        else {
+        } else {
             handleContextMenu({
                 showContextMenu: false,
                 position: {
@@ -445,14 +476,89 @@ export default function () {
         }
     };
 
+    const hideTabContextMenu = event => {
+        let parentNode = getParentNode(event.target, 'inner');
+        if (parentNode) {
+
+        } else {
+            handleTabContextMenu({
+                showContextMenu: false,
+                position: {
+                    left: 0,
+                    top: 0
+                }
+            })
+        }
+    };
+
+    useEffect(() => {
+        const handler = e => {
+            hideTabContextMenu(e);
+            hideContextMenu(e);
+        };
+        document.addEventListener('click', handler);
+        document.addEventListener('contextmenu', handler);
+
+        return () => {
+            document.removeEventListener('click', handler);
+            document.removeEventListener('contextmenu', handler);
+        }
+    }, []);
+
+    const onContextMenu = (e, file) => {
+        if (document.querySelector('.drag').contains(e.target)) {
+            let {clientX: left, clientY: top} = event;
+            handleTabContextMenu({
+                showContextMenu: true,
+                position: {
+                    left,
+                    top
+                },
+                file
+            })
+        }
+    };
+
     const filteredFiles = searchFiles.length ? searchFiles : filesArr;
+
+    const renderTabBar = (props, DefaultTabBar) => {
+        return (
+            <div className={'outer'}>
+                {
+                    openedFiles.map(pane => {
+                        return (
+                            <div
+                                onClick={() => {
+                                    handleTabContextMenu({
+                                        showContextMenu: false,
+                                        position: {
+                                            left: 0,
+                                            top: 0
+                                        }
+                                    });
+                                    handleTabChange(pane.id)
+                                }}
+                                className={'inner'}
+                                onContextMenu={e => onContextMenu(e, pane)}
+                                key={pane.id}>
+                                <CloseOutlined className={'delete-icon'} onClick={e => {
+                                    e.stopPropagation();
+                                    remove(pane.id)
+                                }}/>
+                                <div className={props.activeKey === pane.id ? 'activeTab normalTab' : 'normalTab'}
+                                     style={{textAlign: 'center'}}>{pane.title}</div>
+                            </div>
+                        )
+                    })
+                }
+            </div>
+        )
+    };
 
     return (
         <React.Fragment>
             <Col className={'editor-list'} span={4}>
                 <div
-                    onContextMenu={hideContextMenu}
-                    onClick={hideContextMenu}
                     className={'context-menu'}>
                     <List handleDeleteFile={handleDeleteFile} handleClick={handleClick} files={filteredFiles}/>
                 </div>
@@ -460,8 +566,6 @@ export default function () {
             </Col>
             <Col className={'editor'} span={20}>
                 <div
-                    onContextMenu={hideContextMenu}
-                    onClick={hideContextMenu}
                     className="drag"
                     onDrag={handleDrag}
                     onDragOver={handleDrag}
@@ -479,9 +583,13 @@ export default function () {
                                 hideAdd={true}
                                 className={'main-pane'}
                                 onEdit={handleContentOnEdit}
+                                renderTabBar={renderTabBar}
                             >
                                 {openedFiles.map(pane => {
-                                    return <Tabs.TabPane closable={true} key={pane.id} tab={pane.title}>
+                                    return <Tabs.TabPane
+                                        key={pane.id}
+                                        closable={true}
+                                        tab={pane.title}>
                                         <Editor
                                             onSave={handleSave}
                                             value={pane.body}
@@ -501,7 +609,11 @@ export default function () {
             </Col>
             {
                 contextMenuInfo.showContextMenu ?
-                    <ContextMenu file={contextMenuInfo.file} position={contextMenuInfo.position}/> : ''
+                    <FileContextMenu file={contextMenuInfo.file} position={contextMenuInfo.position}/> : ''
+            }
+            {
+                tabContextMenuInfo.showContextMenu ?
+                    <TabContextMenu file={tabContextMenuInfo.file} position={tabContextMenuInfo.position}/> : ''
             }
         </React.Fragment>
     )

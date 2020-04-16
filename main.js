@@ -19,7 +19,7 @@ const settingStore = new Store({
     name: 'Settings'
 });
 
-let mainWindow, settingsWindow, userWindow;
+let mainWindow;
 
 settingStore.set('upload-dir', path.resolve(__dirname, './src/static'));
 
@@ -62,7 +62,7 @@ app.on('ready', () => {
         width: 1366,
         height: 768,
         // transparent: true,
-        frame: false
+        // frame: false
     };
     // 判断生成环境还是线上环境
     const urlLocation = isDev ? 'http://localhost:3000/App.html' : `file://${path.join(__dirname, './dist/App.html')}`;
@@ -73,12 +73,6 @@ app.on('ready', () => {
     // 垃圾回收
     mainWindow.on('closed', e => {
         mainWindow = null;
-        if (settingsWindow) {
-            settingsWindow = null;
-        }
-        if (userWindow) {
-            userWindow = null;
-        }
     });
     // Menu.setApplicationMenu(null)
 });
