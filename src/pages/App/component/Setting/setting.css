@@ -1,0 +1,46 @@
+.setting-con {
+    margin: 0 auto;
+}
+
+
+.setting-main {
+    width: 30%;
+    margin-top: 5%;
+    margin-left: 38%;
+}
+
+
+
+.login-area {
+    width: 100%;
+    margin: 1.5rem auto;
+}
+
+:global .login-form {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+}
+
+:global .ant-input-prefix {
+    display: flex;
+    align-items: center;
+}
+
+:global .verify {
+    display: flex;
+    font-size: 13px;
+}
+
+.setting-menu {
+    width: 100%;
+    height: 60px;
+    border-bottom: none;
+    text-align: center;
+}
+
+.upload-icon, .download-icon {
+    font-size: 1.2rem;
+}

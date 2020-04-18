@@ -1,0 +1,44 @@
+.list-item {
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+    cursor: pointer;
+    height: 56px;
+}
+
+.title {
+    flex: 1;
+    padding-left: 1rem;
+}
+
+.check-close {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 22px;
+    font-size: 15px;
+}
+
+.rename-input {
+    width: 60%;
+}
+
+.item-icon {
+    cursor: pointer;
+}
+
+.file-context-menu {
+    position: fixed;
+    z-index: 10;
+}
+
+.file-context-menu-item {
+    cursor: pointer;
+}
+
+.list-item > span:nth-child(1) {
+    display: block;
+    height: 22px;
+    line-height: 26px;
+}

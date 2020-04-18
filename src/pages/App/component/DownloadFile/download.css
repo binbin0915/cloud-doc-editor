@@ -1,0 +1,19 @@
+.cloud-file-list {
+    width: 60%;
+    margin: 0 auto;
+}
+
+:global .download-icon {
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 10px;
+}
+
+.ant-table-container table > thead > tr:first-child th:last-child {
+    text-align: center;
+}
+
+.ant-table-tbody > tr > td:last-child {
+    text-align: center;
+}
+

@@ -1,0 +1,31 @@
+.user-login-area {
+    width: 20%;
+    margin: 5rem auto;
+}
+.user-login-form {
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+:global .ant-input-prefix {
+    display: flex;
+    align-items: center;
+}
+
+:global .verify {
+    display: flex;
+    font-size: 13px;
+}
+
+.setting-menu {
+    width: 100%;
+    height: 60px;
+    border-bottom: none;
+    text-align: center;
+}
+
+.upload-icon, .download-icon {
+    font-size: 1.2rem;
+}

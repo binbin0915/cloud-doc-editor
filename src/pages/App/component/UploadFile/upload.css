@@ -1,0 +1,9 @@
+.local-file-list {
+    width: 60%;
+    margin: 0 auto;
+}
+
+.upload-icon {
+    cursor: pointer;
+    font-size: 20px;
+}
