@@ -6,11 +6,28 @@
 const OSS = window.require('ali-oss');
 const fs = window.require('fs');
 const {SuccessModel, ErrorModel, FailedModel} = require('./Model');
+const Store = window.require('electron-store');
+
+const settingsStore = new Store({
+    name: 'Settings'
+});
+const endpoint = settingsStore.get('endpoint');
+const access = settingsStore.get('accessKey');
+const secret = settingsStore.get('secretKey');
+const bucket = settingsStore.get('bucketName');
 
 class AliOSS {
     constructor({accessKeyId, accessKeySecret, bucket, endpoint}) {
         this.store = OSS({endpoint, accessKeyId, accessKeySecret, bucket});
         this.client = new OSS({endpoint, accessKeyId, accessKeySecret, bucket});
+    }
+
+    async getObjectsFromOss(prefix, delimiter) {
+        if (delimiter) {
+            return await this.client.list({prefix, delimiter})
+        } else {
+            return await this.client.list({prefix})
+        }
     }
 
     signatureUrl(objectName) {
@@ -54,6 +71,20 @@ class AliOSS {
         }
     }
 
+    async deleteFile_v2(key) {
+        let {res} = await this.client.delete(key);
+        // 删除成功时ali返回的状态码是204
+        if (res.status === 204 || res.status === 200) {
+            return new SuccessModel({
+                msg: '删除成功'
+            })
+        } else {
+            return new FailedModel({
+                msg: '删除失败'
+            })
+        }
+    }
+
     /**
      * 删除文件
      * @param key 文件在OSS的位置
@@ -61,6 +92,7 @@ class AliOSS {
      */
     async deleteFile(key) {
         let {res} = await this.client.delete(`${key}.md`);
+        console.log(res);
         // 删除成功时ali返回的状态码是204
         if (res.status === 204 || res.status === 200) {
             return new SuccessModel({
@@ -95,7 +127,6 @@ class AliOSS {
     }
 
     async downloadFile(key, filePath) {
-        console.log(key, filePath);
         try {
             let {res, stream} = await this.client.getStream(`${key}.md`);
             if (res.status === 200) {
@@ -125,6 +156,18 @@ class AliOSS {
     }
 }
 
-module.exports = {
-    AliOSS
-};
+const manager = new AliOSS({
+    accessKeyId: access,
+    endpoint: endpoint,
+    accessKeySecret: secret,
+    bucket: bucket,
+});
+
+const staticManager = new OSS({
+    accessKeyId: access,
+    endpoint: endpoint,
+    accessKeySecret: secret,
+    bucket: bucket,
+});
+
+module.exports = {manager, staticManager};

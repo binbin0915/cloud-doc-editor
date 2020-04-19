@@ -1,6 +1,6 @@
 import {combineReducers} from 'redux-immutable'
 
-import AppReducer from '../pages/App/store/reducer'
+import AppReducer from '../store/reducer'
 
 
 export default combineReducers({

@@ -20,6 +20,12 @@ html, body, #root {
     height: 100%;
 }
 
+.editor {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
 .router-spin {
     width: 100%;
     height: 100%;
@@ -30,4 +36,9 @@ html, body, #root {
 
 .header-right-icon {
     cursor: pointer;
+}
+
+.for-editor-content {
+    height: auto !important;
+    width: calc(100% - 30px);
 }

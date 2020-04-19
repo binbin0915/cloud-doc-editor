@@ -2,7 +2,7 @@ import axios from 'axios'
 
 const instance = axios.create({
     timeout: 3000,
-    baseURL: process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8059/api': 'dummy'
+    baseURL: process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8059/api': 'http://127.0.0.1:8059/api'
 });
 
 instance.interceptors.response.use(res => {

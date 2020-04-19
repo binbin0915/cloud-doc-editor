@@ -1,10 +1,8 @@
 import React, {useState, useRef, useCallback} from "react";
-import axios from '@/utils/http'
+import axios from '../../../utils/http'
 import {Button, Form, Input, message} from "antd";
 import {LockOutlined, UserOutlined, MailOutlined, VerifiedOutlined} from "@ant-design/icons";
-import {isEmail} from "@/utils/helper";
-
-const {handleClose} = require('@/utils/store');
+import {isEmail} from "../../../utils/helper";
 
 function Register(props) {
     const [loading, setLoading] = useState(false);

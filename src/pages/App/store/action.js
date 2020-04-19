@@ -9,7 +9,7 @@ import {
     RENAME_RAM_FILE,
     SET_LOGIN_INFO,
     CHANGE_AUTO_SYNC,
-    FILELIST_CONTEXT_MENU,
+    FILE_ITEM_CONTEXT_MENU,
     REMOVE_FILE,
     REMEMBER_HIDE,
     SET_SEARCH_TYPE,
@@ -17,7 +17,11 @@ import {
     SET_CLOUD_FILES,
     SET_SEARCH_VALUE,
     DELETE_CLOUD_FILE,
-    TAB_CONTEXT_MENU
+    TAB_CONTEXT_MENU,
+    FILE_LIST_CONTEXT_MENU,
+    SET_CLOUD_DIRS,
+    SET_CLOUD_CONTEXT_MENU,
+    SET_CLOUD_OBJECTS
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -26,7 +30,7 @@ export const setFileLoaded = (id, data) => ({type: SET_FILE_LOADED, payload: {id
 
 export const changeOpenedFiles = ids => ({type: CHANGE_OPENED_FILE, payload: {ids}});
 
-export const deleteFile = id => ({type: DELETE_FILE, payload: {id}});
+export const deleteFile = file => ({type: DELETE_FILE, payload: {file}});
 
 export const addFile = file => ({type: ADD_FILE, payload: {file}});
 
@@ -43,7 +47,7 @@ export const setLoginInfo = loginInfo => ({type: SET_LOGIN_INFO, payload: {login
 
 export const changeAutoSync = autoSync => ({type: CHANGE_AUTO_SYNC, payload: {autoSync}});
 
-export const handleContextMenu = contextMenuInfo => ({type: FILELIST_CONTEXT_MENU, payload: {contextMenuInfo}});
+export const handleContextMenu = contextMenuInfo => ({type: FILE_ITEM_CONTEXT_MENU, payload: {contextMenuInfo}});
 
 export const removeFile = file => ({type: REMOVE_FILE, payload: {file}});
 
@@ -60,3 +64,11 @@ export const setSearchValue = searchValue => ({type: SET_SEARCH_VALUE, payload: 
 export const deleteCloudFile = cloudFile => ({type: DELETE_CLOUD_FILE, payload: {cloudFile}});
 
 export const handleTabContextMenu = tabContextMenuInfo => ({type: TAB_CONTEXT_MENU, payload: {tabContextMenuInfo}});
+
+export const handleFileListContextMenu = fileListContextMenuInfo => ({type: FILE_LIST_CONTEXT_MENU, payload: {fileListContextMenuInfo}});
+
+export const setCloudDir = dirs => ({type: SET_CLOUD_DIRS, payload: {dirs}});
+
+export const setCloudObjects = objects => ({type: SET_CLOUD_OBJECTS, payload: {objects}});
+
+export const setCloudFileContextMenuInfo = cloudContextMenuInfo => ({type: SET_CLOUD_CONTEXT_MENU, payload: {cloudContextMenuInfo}});

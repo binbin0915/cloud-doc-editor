@@ -1,8 +1,8 @@
 import React, {useState, useRef, useCallback} from "react";
-import axios from '@/utils/http'
+import axios from '../../../utils/http'
 import {Button, Form, Input, message} from "antd";
 import {LockOutlined, MailOutlined, VerifiedOutlined} from "@ant-design/icons";
-import {isEmail} from "@/utils/helper";
+import {isEmail} from "../../../utils/helper";
 import './editPwd.css'
 import * as action from "../../../store/action";
 import useAction from "../../../hooks/useAction";

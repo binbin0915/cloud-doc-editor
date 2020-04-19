@@ -10,10 +10,11 @@ import {List as AntList, Modal, Input} from "antd";
 import useAction from "../../hooks/useAction";
 import * as actions from '../../store/action'
 import {useSelector} from "react-redux";
-import {readFile, deleteFile as deleteSysFile, isExistSameFile, renameFile, writeFile} from '@/utils/fileHelper';
-import events from '@/utils/eventBus'
+import {isExistSameFile, renameFile, writeFile} from '../../utils/fileHelper';
+import events from '../../utils/eventBus'
 import {message} from 'antd'
-import {obj2Array} from '@/utils/helper'
+import {manager} from '../../utils/aliOssManager'
+import {obj2Array} from '../../utils/helper'
 
 const nodePath = window.require('path');
 const Store = window.require('electron-store');
@@ -23,12 +24,14 @@ const settingsStore = new Store({
 });
 const {confirm} = Modal;
 
+
 export default function ListItem({file, handleClick, handleDeleteFile}) {
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
+    const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
+    const autoSync = useSelector(state => state.getIn(['App', 'autoSync']));
     const filesArr = obj2Array(files);
     const [editId, setEditId] = useState('');
     const inputRef = useRef(null);
-
     const [mouseEnter, setMouseEnter] = useState(false);
     const {deleteFile, addFile, renameRamFile, handleContextMenu} = useAction(actions);
     const [title, setTitle] = useState(file.title);
@@ -89,6 +92,7 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
     };
 
     const handleFileNameChange = useCallback(e => {
+        let originTitle = file.title;
         e.stopPropagation();
         let newName = `${title}.md`;
         // 新建的文件没有路径
@@ -101,6 +105,7 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
             __handleClose();
             return;
         }
+        let user = loginInfo.user;
         // 去对应路径查找有无同路径的文件，再在内存中查找是否有同路径的文件
         isExistSameFile(nodePath.dirname(filePath), newName)
             .then(len => {
@@ -110,7 +115,6 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                         title: '文件已存在，确定覆盖？',
                         content: `要覆盖${title}.md吗？`,
                         successCallback() {
-                            console.log(file.id);
                             // 找到内存中的相同文件名的文件
                             const ramSameFiles = filesArr.filter(file => file.filePath === newPath);
                             // 除去自己
@@ -121,7 +125,6 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                             // 磁盘上删去
                             writeFile(filePath, file.body)
                                 .then(() => {
-                                    message.success(isNew ? "新建文件成功" : "重命名文件成功");
                                     file.title = title;
                                     file.filePath = newPath;
                                     if (isNew) {
@@ -129,15 +132,34 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                                     }
                                     // 内存中没有这个文件直接添加
                                     if (!sameNameFile) {
+                                        if (autoSync) {
+                                            manager.uploadFile(`${user.id}/${file.title}:${file.id}`, file.filePath)
+                                                .then(() => message.success('上传文件成功'))
+                                                .catch(() => message.error("上传文件失败"));
+                                        } else {
+                                            message.success(isNew ? "新建文件成功" : "重命名文件成功");
+                                        }
                                         addFile(file);
+                                        // 上传到云
+
                                     } else {
+                                        // 删除远端文件再进行本文件的上传
+                                        if (autoSync) {
+                                            let originKey = `${user.id}/${sameNameFile.title}:${sameNameFile.id}`;
+                                            let curKey = `${user.id}/${file.title}:${file.id}`;
+                                            manager.deleteFile(originKey);
+                                            manager.uploadFile(curKey, file.filePath)
+                                                .then(() => message.success('上传文件成功'))
+                                                .catch(() => message.error("上传文件失败"));
+                                        } else {
+                                            message.success(isNew ? "新建文件成功" : "重命名文件成功");
+                                        }
                                         // 内存中删去
                                         renameRamFile(sameNameFile, file);
                                     }
 
                                 })
                                 .catch(error => {
-                                    console.log(error);
                                     message.error(isNew ? "新建文件失败" : "重命名文件失败");
                                 });
                             __handleClose();
@@ -152,20 +174,37 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
                         // 写内容到对应的路径
                         writeFile(newPath, file.body)
                             .then(() => {
+                                // 上传到云
+                                if (autoSync) {
+                                    manager.uploadFile(`${user.id}/${file.title}:${file.id}`, file.filePath)
+                                        .then(() => message.success('上传文件成功'))
+                                        .catch(() => message.error("上传文件失败"));
+                                } else {
+                                    message.success("新建文件成功");
+                                }
                                 addFile(file);
-                                message.success("新建文件成功");
                             })
                             .catch(err => {
                                 message.error("新建文件失败");
                             })
                     } else {
-                        console.log(file.filePath);
                         // 直接覆盖
                         renameFile(file.filePath, newName)
                             .then(() => {
                                 file.filePath = newPath;
+                                // 先删除云端文件再上传
+                                if (autoSync) {
+                                    let originKey = `${user.id}/${originTitle}:${file.id}`;
+                                    let curKey = `${user.id}/${title}:${file.id}`;
+                                    manager.deleteFile(originKey);
+                                    manager.uploadFile(curKey, newPath)
+                                        .then(() => message.success('上传文件成功'))
+                                        .catch(() => message.error("上传文件失败"));
+                                } else {
+                                    message.success("重命名文件成功");
+                                }
                                 addFile(file);
-                                message.success("重命名文件成功");
+
                             })
                             .catch(err => {
                                 console.log(err);
@@ -185,29 +224,42 @@ export default function ListItem({file, handleClick, handleDeleteFile}) {
     const handleInputClose = useCallback(e => {
         e.stopPropagation();
         if (file.isNewlyCreate) {
-            deleteFile(file.id);
+            deleteFile(file);
         } else {
             __handleClose();
         }
     }, []);
 
     const onContextMenu = e => {
-        if (document.querySelector('.file-list').contains(e.target)) {
-            let {clientX: left, clientY: top} = event;
-            handleContextMenu({
-                showContextMenu: true,
-                position: {
-                    left,
-                    top
-                },
-                file
-            })
-        }
+        let {clientX: left, clientY: top} = event;
+        handleContextMenu({
+            showContextMenu: true,
+            position: {
+                left,
+                top
+            },
+            file
+        });
     };
+
+    const hideContextMenu = e => {
+        handleContextMenu({
+            showContextMenu: false,
+            position: {
+                left: 0,
+                top: 0
+            },
+            file: {}
+        });
+    };
+
 
     return (
         <AntList.Item
-            onClick={() => handleClick(file)}
+            onClick={e => {
+                hideContextMenu(e);
+                handleClick(e, file);
+            }}
             className={'list-item'}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}

@@ -5,13 +5,13 @@ import {Col, List as AntList, message, Modal, Tabs} from 'antd'
 import List from '../List'
 import './editorMain.css'
 import BottomButton from '../BottomButton'
-import {obj2Array} from '@/utils/helper'
+import {obj2Array} from '../../utils/helper'
 import useAction from '../../hooks/useAction'
 import * as actions from '../../store/action'
-import events from '@/utils/eventBus'
-import {readFile, copyFile, writeFile, deleteFile as deleteSysFile} from '@/utils/fileHelper'
+import events from '../../utils/eventBus'
+import {readFile, writeFile, deleteFile as deleteSysFile} from '../../utils/fileHelper'
 import uuidv4 from "uuid/v4";
-import {getParentNode} from "@/utils/helper";
+import {getParentNode, timeStampToString} from "../../utils/helper";
 import {ExclamationCircleOutlined, CloseOutlined} from "@ant-design/icons";
 
 const nodePath = window.require('path');
@@ -19,23 +19,11 @@ const fs = window.require('fs');
 
 const {ipcRenderer, shell} = window.require('electron');
 
-const {AliOSS} = require('@/utils/aliOssManager');
+const {manager} = require('../../utils/aliOssManager');
 const Store = window.require('electron-store');
 const settingsStore = new Store({
     name: 'Settings'
 });
-const endpoint = settingsStore.get('endpoint');
-const access = settingsStore.get('accessKey');
-const secret = settingsStore.get('secretKey');
-const bucket = settingsStore.get('bucketName');
-
-const manager = new AliOSS({
-    accessKeyId: access,
-    endpoint: endpoint,
-    accessKeySecret: secret,
-    bucket: bucket,
-});
-const uploadDir = settingsStore.get('upload-dir');
 
 const {confirm} = Modal;
 
@@ -44,40 +32,83 @@ export default function () {
     const searchFiles = useSelector(state => state.getIn(['App', 'searchFiles'])).toJS();
     const filesArr = obj2Array(files);
     const activeKey = useSelector(state => state.getIn(['App', 'activeFileId']));
+    const activeFile = files[activeKey];
     const autoSync = useSelector(state => state.getIn(['App', 'autoSync']));
     const contextMenuInfo = useSelector(state => state.getIn(['App', 'contextMenuInfo'])).toJS();
     const tabContextMenuInfo = useSelector(state => state.getIn(['App', 'tabContextMenuInfo'])).toJS();
+    const fileListContextMenuInfo = useSelector(state => state.getIn(['App', 'fileListContextMenuInfo'])).toJS();
     const loginInfo = useSelector(state => state.getIn(['App', 'loginInfo'])).toJS();
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
-    const {removeFile, changeActiveKey, setFileLoaded, changeOpenedFiles, deleteFile, saveFile, addFile, addFiles, handleContextMenu, handleTabContextMenu} = useAction(actions);
-    const openedFiles = filesArr.filter(file => openedFileIds.findIndex(id => id === file.id) !== -1);
+    const {
+        handleFileListContextMenu,
+        removeFile,
+        changeActiveKey,
+        setFileLoaded,
+        changeOpenedFiles,
+        deleteFile,
+        saveFile,
+        addFile,
+        addFiles,
+        handleContextMenu,
+        handleTabContextMenu,
+        setSearchValue
+    } = useAction(actions);
+    const openedFiles = filesArr.filter(file => openedFileIds.includes(file.id));
 
     const handleDeleteFile = useCallback(file => {
-        confirm({
-            title: '要删除文件吗',
-            content: `确定要删除${file.title}.md吗？`,
-            icon: <ExclamationCircleOutlined/>,
-            okText: '确定',
-            okType: 'danger',
-            cancelText: '取消',
-            onOk() {
-                deleteSysFile(file.filePath)
-                    .then(() => {
-                        deleteFile(file.id);
-                        message.success('删除成功');
-                    })
-                    .catch((err) => {
-                        message.error('该文件已被删除');
-                        deleteFile(file.id);
-                    })
-            },
-            onCancel() {
-                // do nothing
-            },
-        });
-    }, []);
+        const handleDelete = ({title, content, successCallback}) => {
+            confirm({
+                title,
+                content,
+                icon: <ExclamationCircleOutlined/>,
+                okText: '确定',
+                okType: 'danger',
+                cancelText: '取消',
+                onOk: successCallback,
+                onCancel() {
+                    // do nothing
+                },
+            });
+        };
+        if (autoSync) {
+            handleDelete({
+                title: '要删除文件吗',
+                content: `已开启云同步，删除本地文件会删除云端文件，确定要删除${file.title}.md吗？`,
+                successCallback() {
+                    manager.deleteFile(`${loginInfo.user.id}/${file.title}:${file.id}`)
+                        .then(() => {
+                            deleteSysFile(file.filePath)
+                                .then(() => {
+                                    deleteFile(file);
+                                    message.success('删除成功');
+                                })
+                                .catch((err) => {
+                                    message.error('该文件已被删除');
+                                    deleteFile(file);
+                                })
+                        });
+                }
+            });
+        } else {
+            handleDelete({
+                title: '要删除文件吗',
+                content: `确定要删除${file.title}.md吗？`,
+                successCallback() {
+                    deleteSysFile(file.filePath)
+                        .then(() => {
+                            deleteFile(file);
+                            message.success('删除成功');
+                        })
+                        .catch((err) => {
+                            message.error('该文件已被删除');
+                            deleteFile(file);
+                        })
+                }
+            });
+        }
+    }, [autoSync]);
 
-    const handleClick = useCallback(file => {
+    const handleClick = useCallback((e, file) => {
         if (!file.isNewlyCreate) {
             const newOpenedFileIds = [...openedFileIds.filter(id => file.id !== id), file.id];
             changeOpenedFiles(newOpenedFileIds);
@@ -90,12 +121,13 @@ export default function () {
                     .catch(err => {
                         // 文件已被删除
                         message.error('文件已被删除');
-                        deleteFile(file.id);
+                        deleteFile(file);
                     });
             } else {
                 changeActiveKey(file.id);
             }
         }
+        hideContextMenu(e);
     }, [openedFileIds, files, activeKey]);
 
     const FileContextMenu = useCallback(({position, file}) => {
@@ -103,9 +135,8 @@ export default function () {
             {
                 id: '1',
                 title: '打开',
-                onClick: function () {
-                    handleClick(file);
-                    hideContextMenu();
+                onClick: function (e) {
+                    handleClick(e, file);
                 }
             },
             {
@@ -151,9 +182,72 @@ export default function () {
                 bordered
                 renderItem={(dataItem) => {
                     return (
-                        <AntList.Item onClick={() => {
-                            hideContextMenu();
-                            dataItem.onClick(file);
+                        <AntList.Item onClick={e => {
+                            hideContextMenu(e);
+                            dataItem.onClick(e);
+                        }} className={'file-context-menu-item'}
+                                      key={dataItem.id}>{dataItem.title}</AntList.Item>
+                    )
+                }}/>
+        )
+    }, [openedFileIds, activeKey, files]);
+
+    const FileListContextMenu = useCallback(({position, file}) => {
+        const contextMenuData = [
+            {
+                id: '1',
+                title: '新建文件',
+                onClick: function () {
+                    const id = uuidv4();
+                    const time = +new Date();
+                    const newFile = {
+                        id,
+                        title: '',
+                        body: '## 请输入Markdown',
+                        createdAt: time,
+                        isNewlyCreate: true,
+                        localUpdatedAt: time,
+                    };
+                    addFile(newFile);
+                }
+            },
+            {
+                id: '2',
+                title: '导入文件',
+                onClick: function () {
+                    events.emit('import-files');
+                }
+            },
+            {
+                id: '3',
+                title: '在文件夹中打开',
+                onClick: function () {
+                    shell.showItemInFolder(settingsStore.get('savedFileLocation'));
+                }
+            },
+            {
+                id: '4',
+                title: '搜索文件',
+                onClick: function () {
+                    setSearchValue('');
+                    events.emit('focus-search');
+                }
+            },
+        ];
+        return (
+            <AntList
+                style={{
+                    left: position.left,
+                    top: position.top
+                }}
+                className={'file-context-menu'}
+                dataSource={contextMenuData}
+                bordered
+                renderItem={(dataItem) => {
+                    return (
+                        <AntList.Item onClick={e => {
+                            hideFileListContextMenu(e);
+                            dataItem.onClick(e);
                         }} className={'file-context-menu-item'}
                                       key={dataItem.id}>{dataItem.title}</AntList.Item>
                     )
@@ -166,22 +260,45 @@ export default function () {
             {
                 id: '1',
                 title: '关闭',
+                onClick() {
+                    remove(file.id)
+                }
             },
             {
                 id: '2',
                 title: '关闭所有',
+                onClick() {
+                    changeActiveKey('');
+                    changeOpenedFiles([]);
+                }
             },
             {
                 id: '3',
                 title: '关闭左侧',
+                onClick() {
+                    const curIndex = openedFiles.findIndex(curFile => curFile.id === file.id);
+                    const newOpenedFiles = openedFiles.filter((curFile, index) => index >= curIndex);
+                    const newOpenedFileIds = newOpenedFiles.map(file => file.id);
+                    changeOpenedFiles(newOpenedFileIds);
+                }
             },
             {
                 id: '4',
                 title: '关闭右侧',
+                onClick() {
+                    const curIndex = openedFiles.findIndex(curFile => curFile.id === file.id);
+                    const newOpenedFiles = openedFiles.filter((curFile, index) => index <= curIndex);
+                    const newOpenedFileIds = newOpenedFiles.map(file => file.id);
+                    changeOpenedFiles(newOpenedFileIds);
+                }
             },
             {
                 id: '5',
                 title: '关闭其他',
+                onClick() {
+                    changeOpenedFiles([file.id]);
+                    changeActiveKey(file.id);
+                }
             }
         ];
         return (
@@ -196,6 +313,7 @@ export default function () {
                 renderItem={(dataItem) => {
                     return (
                         <AntList.Item
+                            onClick={dataItem.onClick}
                             className={'file-context-menu-item'}
                             key={dataItem.id}>{dataItem.title}</AntList.Item>
                     )
@@ -204,9 +322,13 @@ export default function () {
     }, [openedFileIds, files, activeKey]);
 
     useEffect(() => {
-        events.on('delete-file', targetKey => {
+        const handler = targetKey => {
             remove(targetKey)
-        });
+        };
+        events.on('delete-file', handler);
+        return () => {
+            events.off('delete-file', handler);
+        }
     }, []);
 
     const uploadFile = async (record) => {
@@ -216,7 +338,8 @@ export default function () {
         } else {
             content = await readFile(record.filePath)
         }
-        const pattern = /!\[(.*?)\]\((.*?)\)/mg;
+        // 匹配本地路径的图片
+        const pattern = /!\[(.*?)\]\((file:\/\/\/.*?)\)/mg;
         const result = [];
         // 提取出本地路径的图片进行上传
         let matcher;
@@ -231,49 +354,42 @@ export default function () {
         }
         if (loginInfo && loginInfo.user && loginInfo.user.id) {
             const userId = loginInfo.user.id;
+            let uploadFile = {...record};
             if (result.length) {
                 let newContent = '';
                 for (let imgItem of result) {
-                    let urlArr = imgItem.url.split('/');
-                    let tempName = urlArr[urlArr.length - 1];
-                    let extname = nodePath.extname(tempName);
-                    let imgName = nodePath.basename(tempName, extname);
+                    let url = imgItem.url;
+                    let extname = nodePath.extname(url);
+                    let imgName = nodePath.basename(url, extname);
+                    let protocol = 'file:///';
+                    let realPath = nodePath.resolve(protocol, url.slice(protocol.length));
                     // TODO 文件不存在时的处理
-                    if (!fs.existsSync(nodePath.join(uploadDir, tempName))) {
-                        message.error(`${tempName}${extname}文件不存在`);
+                    if (!fs.existsSync(realPath)) {
+                        message.error(`${url}文件不存在`);
                         return;
                     } else {
                         try {
-                            await manager.uploadFile(`${userId}/img/${imgName}`, nodePath.join(uploadDir, tempName), {type: extname});
+                            await manager.uploadFile(`${userId}/img/${imgName}`, realPath, {type: extname});
                             let url = await manager.getImgUrl(`${userId}/img/${imgName}${extname}`);
+                            console.log(url);
                             newContent = content.replace(pattern, `![${imgItem.alt}](${url})`);
                         } catch (e) {
                             // do nothing
                         }
                     }
                 }
-                record.body = newContent;
+                uploadFile.body = newContent;
             }
             // 上传文件
-            manager.uploadFile(`${userId}/${record.title}:${record.id}`, record.filePath)
+            manager.uploadFile(`${userId}/${uploadFile.title}:${uploadFile.id}`, uploadFile.filePath)
                 .then(({code}) => {
                     if (code === 0) {
+                        record.serverUpdatedAt = +new Date();
+                        record.isSynced = true;
+                        // 这里会存在一种情况就是，本地文件名改变之后上传到云时，file id会重复
+                        addFile(record);
                         // 保存到本地
-                        writeFile(record.filePath, record.body)
-                            .then(() => {
-                                addFile(record);
-                                message.success('文件已保存，上传成功');
-                                // 删去本地图片
-                                result.map(async imgItem => {
-                                    let urlArr = imgItem.url.split('/');
-                                    let tempName = urlArr[urlArr.length - 1];
-                                    let filePath = nodePath.join(uploadDir, tempName);
-                                    await deleteFile(filePath)
-                                });
-                            })
-                            .catch(() => {
-                                message.error('文件已保存，上传失败');
-                            });
+                        message.success('文件已保存，上传成功');
                     } else {
                         message.error('文件已保存，上传失败');
                     }
@@ -292,7 +408,7 @@ export default function () {
             } catch (err) {
                 // 文件已被删除
                 message.error('文件已被删除');
-                deleteFile(activeKey);
+                deleteFile(activeFile);
             }
         }
     }, [activeKey, files]);
@@ -301,32 +417,33 @@ export default function () {
         eval(action)(targetKey)
     }, [openedFileIds]);
 
-    // TODO remove有问题
+    useEffect(() => {
+        const handler = id => {
+            remove(id)
+        };
+        events.on('remove', handler);
+        return () => {
+            events.off('remove', handler);
+        }
+    }, [openedFileIds, activeKey]);
+
     const remove = useCallback(targetKey => {
-        // let lastIndex = 0;
-        const newOpenedFileIds = openedFileIds.filter(fileId => fileId !== targetKey);
-        console.log(newOpenedFileIds);
-        let curFileIndex = openedFileIds.findIndex(fileId => targetKey === fileId);
-        changeOpenedFiles(newOpenedFileIds);
-        if (newOpenedFileIds.length === 0) {
+        const newOpenedFiles = openedFiles.filter(file => file.id !== targetKey);
+        const newOpenedFileIds = openedFileIds.filter(id => id !== targetKey);
+        let curFileIndex = openedFiles.findIndex(file => targetKey === file.id);
+        if (newOpenedFiles.length === 0) {
             changeActiveKey('');
+            changeOpenedFiles([]);
             return
         }
-        let key;
-        if (newOpenedFileIds.length === 1) {
-            key = newOpenedFileIds[0];
-        }
-        // 关闭的是已激活的tab
         if (targetKey === activeKey) {
             if (curFileIndex === 0) { // 当前激活的tab在第一个的位置，则正在编辑第二个
-                key = newOpenedFileIds[0];
+                changeActiveKey(newOpenedFiles[0].id);
             } else { // 当前激活的tab在其他的位置，则正在编辑前一个
-                key = newOpenedFileIds[curFileIndex - 1];
+                changeActiveKey(newOpenedFiles[curFileIndex - 1].id);
             }
         }
-        // console.log(newOpenedFileIds, key);
-        // changeActiveKey(key);
-        handleTabChange(key);
+        changeOpenedFiles(newOpenedFileIds);
     }, [openedFileIds, activeKey]);
 
     const handleTabChange = useCallback(activeKey => {
@@ -339,16 +456,15 @@ export default function () {
                 })
                 .catch(() => {
                     message.error('文件已被删除');
-                    deleteFile(activeKey);
+                    deleteFile(activeFile);
                 })
         }
     }, [activeKey, files, remove]);
 
     const handleAddImg = useCallback(file => {
-        // 上传图片到本地 static文件夹
-        let fileName = copyFile(file.path);
+        const path = '![' + file.name + '](file:///' + file.path.replace(/\\/g, '/') + ')';
         let activeFile = files[activeKey];
-        activeFile.body += `![alt](/static/${fileName})`;
+        activeFile.body += path;
         saveFile(activeFile);
         writeFile(activeFile.filePath, activeFile.body)
             .then(() => {
@@ -408,9 +524,20 @@ export default function () {
     const handleDrop = async e => {
         let importedFiles = e.dataTransfer.files;
 
+        // 如果编辑器已打开，那么可上传图片
         if (importedFiles.length === 1) {
-            let path = importedFiles[0].path;
-            if (nodePath.extname(path) !== '.md') {
+            let importedFile = importedFiles[0];
+            let path = importedFile.path;
+            // 导入的是图片，查看是否又打开的文件
+            if (/image\/.+?/mg.test(importedFile.type)) {
+                if (openedFileIds.length) {
+                    handleAddImg({path, name: nodePath.basename(path)})
+                } else {
+                    message.error("导入的文件不是md")
+                }
+            }
+            // 导入的是md
+            else if (nodePath.extname(path) !== '.md') {
                 message.error("导入的文件不是md")
             } else {
                 let samePathFile = filesArr.find(file => file.filePath === path);
@@ -471,8 +598,10 @@ export default function () {
                 position: {
                     left: 0,
                     top: 0
-                }
-            })
+                },
+                file: {}
+            });
+            // 打开上下文菜单
         }
     };
 
@@ -486,7 +615,8 @@ export default function () {
                 position: {
                     left: 0,
                     top: 0
-                }
+                },
+                file: {}
             })
         }
     };
@@ -495,29 +625,59 @@ export default function () {
         const handler = e => {
             hideTabContextMenu(e);
             hideContextMenu(e);
+            hideFileListContextMenu(e);
+        };
+        const contextMenuHandler = e => {
+            hideTabContextMenu(e);
+            hideContextMenu(e);
+            if (e.target.className !== 'context-menu') {
+                hideFileListContextMenu(e);
+            }
         };
         document.addEventListener('click', handler);
-        document.addEventListener('contextmenu', handler);
+        document.addEventListener('contextmenu', contextMenuHandler);
 
         return () => {
             document.removeEventListener('click', handler);
-            document.removeEventListener('contextmenu', handler);
+            document.removeEventListener('contextmenu', contextMenuHandler);
         }
     }, []);
 
-    const onContextMenu = (e, file) => {
-        if (document.querySelector('.drag').contains(e.target)) {
+    const onTabContextMenu = (e, file) => {
+        let {clientX: left, clientY: top} = event;
+        handleTabContextMenu({
+            showContextMenu: true,
+            position: {
+                left,
+                top
+            },
+            file
+        })
+    };
+
+    const hideFileListContextMenu = e => {
+        handleFileListContextMenu({
+            showContextMenu: false,
+            position: {
+                left: 0,
+                top: 0
+            }
+        })
+    };
+
+    const onFileListContextMenu = e => {
+        if (e.target.className === 'context-menu') {
             let {clientX: left, clientY: top} = event;
-            handleTabContextMenu({
+            handleFileListContextMenu({
                 showContextMenu: true,
                 position: {
                     left,
                     top
-                },
-                file
+                }
             })
         }
     };
+
 
     const filteredFiles = searchFiles.length ? searchFiles : filesArr;
 
@@ -539,7 +699,7 @@ export default function () {
                                     handleTabChange(pane.id)
                                 }}
                                 className={'inner'}
-                                onContextMenu={e => onContextMenu(e, pane)}
+                                onContextMenu={e => onTabContextMenu(e, pane)}
                                 key={pane.id}>
                                 <CloseOutlined className={'delete-icon'} onClick={e => {
                                     e.stopPropagation();
@@ -559,6 +719,8 @@ export default function () {
         <React.Fragment>
             <Col className={'editor-list'} span={4}>
                 <div
+                    onClick={hideFileListContextMenu}
+                    onContextMenu={onFileListContextMenu}
                     className={'context-menu'}>
                     <List handleDeleteFile={handleDeleteFile} handleClick={handleClick} files={filteredFiles}/>
                 </div>
@@ -591,6 +753,8 @@ export default function () {
                                         closable={true}
                                         tab={pane.title}>
                                         <Editor
+                                            subfield={true}
+                                            preview={true}
                                             onSave={handleSave}
                                             value={pane.body}
                                             onChange={handleValueChange}
@@ -606,6 +770,10 @@ export default function () {
                         )
                     }
                 </div>
+                {
+                    activeFile && activeFile.isSynced && activeFile.serverUpdatedAt ?
+                        <div className={'sync'}>已同步，上次同步{timeStampToString(activeFile.serverUpdatedAt)}</div> : ''
+                }
             </Col>
             {
                 contextMenuInfo.showContextMenu ?
@@ -614,6 +782,10 @@ export default function () {
             {
                 tabContextMenuInfo.showContextMenu ?
                     <TabContextMenu file={tabContextMenuInfo.file} position={tabContextMenuInfo.position}/> : ''
+            }
+            {
+                fileListContextMenuInfo.showContextMenu ?
+                    <FileListContextMenu position={fileListContextMenuInfo.position}/> : ''
             }
         </React.Fragment>
     )

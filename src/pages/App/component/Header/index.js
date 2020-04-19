@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react'
+import React, {useCallback, useState, useEffect, useRef} from 'react'
 import {useHistory, useLocation} from 'react-router-dom'
 import {Col, Button, Checkbox, Dropdown, Menu, Input, Modal, message} from "antd";
 import {
@@ -17,7 +17,8 @@ import './header.css'
 import {useSelector} from "react-redux";
 import useAction from "../../hooks/useAction";
 import * as action from "../../store/action";
-import {obj2Array} from "../../../../utils/helper";
+import {obj2Array} from "../../utils/helper";
+import events from '../../utils/eventBus'
 
 const Store = window.require('electron-store');
 const {remote} = window.require('electron');
@@ -44,7 +45,18 @@ export default function Header() {
     const [visible, setVisible] = useState(false);
     const [remember, setRemember] = useState(false);
     const handleEditorClick = useCallback(e => {
-        history.push(e.key);
+        let prefix = loginInfo && loginInfo.user && loginInfo.user.id;
+        history.push(`${e.key}?prefix=${prefix}`);
+    }, [loginInfo]);
+    const searchRef = useRef(null);
+    useEffect(() => {
+        const handler = () => {
+            searchRef.current.focus()
+        };
+        events.on('focus-search', handler);
+        return () => {
+            events.off('focus-search', handler);
+        }
     }, []);
     const SettingDropItem = () => {
         const handleClick = ({item, key, keyPath, domEvent}) => {
@@ -110,6 +122,7 @@ export default function Header() {
                     setLoginInfo({});
                     settingsStore.set('token', '');
                     settingsStore.set('user', '');
+                    changeAutoSync(false);
                     message.success("注销成功")
                 },
                 icon: <QuestionCircleFilled/>
@@ -191,7 +204,8 @@ export default function Header() {
                         </Dropdown>
                     )
                 }
-                <Input.Search value={searchValue} onChange={handleSearchValueChange} onSearch={handleSearch}
+                <Input.Search ref={searchRef} value={searchValue} onChange={handleSearchValueChange}
+                              onSearch={handleSearch}
                               className={'header-search'}/>
             </Col>
             <Col span={loginInfo && loginInfo.user ? 15 : 17}>
@@ -203,7 +217,8 @@ export default function Header() {
                     <Menu.Item className={'no-drag'} key={'/editor'}>
                         <EditOutlined/>
                     </Menu.Item>
-                    <Menu.Item className={'no-drag'} key={'/uploadFile'}>
+                    <Menu.Item className={'no-drag'}
+                               key={`/uploadFile`}>
                         <CloudUploadOutlined/>
                     </Menu.Item>
                     <Menu.Item className={'no-drag'} key={'/downloadFile'}>

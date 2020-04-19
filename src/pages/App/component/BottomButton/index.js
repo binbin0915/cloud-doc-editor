@@ -1,14 +1,15 @@
-import React, {useCallback} from 'react'
+import React, {useCallback, useEffect} from 'react'
 import {Button, message} from 'antd'
 import {ImportOutlined, FileAddOutlined} from '@ant-design/icons'
 import './btn.css'
 import {useSelector} from "react-redux";
 import uuidv4 from "uuid/v4";
 
-import {obj2Array, array2Obj} from '@/utils/helper'
-import {fileStatus, readFile} from '@/utils/fileHelper'
+import {obj2Array} from '../../utils/helper'
+import {readFile} from '../../utils/fileHelper'
 import useAction from "../../hooks/useAction";
 import * as actions from "../../store/action";
+import events from '../../utils/eventBus'
 
 const nodePath = window.require('path');
 
@@ -18,6 +19,13 @@ export default function BottomButton() {
     const files = useSelector(state => state.getIn(['App', 'files'])).toJS();
     const {changeActiveKey, setFileLoaded, changeOpenedFiles, addFile, addFiles} = useAction(actions);
     const openedFileIds = useSelector(state => state.getIn(['App', 'openedFileIds'])).toJS();
+
+    useEffect(() => {
+        events.on('import-files', importFile);
+        return () => {
+            events.off('import-files', importFile);
+        }
+    }, [files]);
 
     const handleCreateNewFile = () => {
         const id = uuidv4();

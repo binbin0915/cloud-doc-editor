@@ -1,5 +1,5 @@
 import React, {useCallback} from "react";
-import {Menu, Row, Col} from "antd";
+import {Menu, Col} from "antd";
 import {Switch, Route, Redirect, useLocation, useHistory} from 'react-router-dom'
 import Login from "./Login";
 import './setting.css'

@@ -5,6 +5,9 @@
     "stage-0"
   ],
   "plugins": [
+    "add-module-exports",
+    "transform-decorators-legacy",
+    "transform-object-rest-spread",
     [
       "transform-runtime",
       {
@@ -21,6 +24,13 @@
         "libraryName": "antd",
         "libraryDirectory": "es",
         "style": "css"
+      }
+    ],
+    [
+      "import",
+      {
+        "libraryName": "lodash",
+        "libraryDirectory": ""
       }
     ]
   ]

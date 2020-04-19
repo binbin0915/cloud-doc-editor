@@ -10,7 +10,7 @@ import {
     RENAME_RAM_FILE,
     SET_LOGIN_INFO,
     CHANGE_AUTO_SYNC,
-    FILELIST_CONTEXT_MENU,
+    FILE_ITEM_CONTEXT_MENU,
     REMOVE_FILE,
     REMEMBER_HIDE,
     SET_SEARCH_TYPE,
@@ -18,11 +18,15 @@ import {
     SET_SEARCH_FILES,
     SET_SEARCH_VALUE,
     DELETE_CLOUD_FILE,
-    TAB_CONTEXT_MENU
+    TAB_CONTEXT_MENU,
+    FILE_LIST_CONTEXT_MENU,
+    SET_CLOUD_DIRS,
+    SET_CLOUD_CONTEXT_MENU,
+    SET_CLOUD_OBJECTS
 } from './constants'
-import {array2Obj, obj2Array} from "@/utils/helper";
+import {array2Obj, obj2Array} from "../utils/helper";
 
-const {fileStore, settingsStore} = require('@/utils/store');
+const {fileStore, settingsStore} = require('../utils/store');
 
 const defaultState = fromJS({
     files: getFiles() || {},
@@ -49,10 +53,27 @@ const defaultState = fromJS({
         },
         file: {}
     },
+    fileListContextMenuInfo: {
+        showContextMenu: false,
+        position: {
+            left: 0,
+            right: 0
+        }
+    },
     hideInfo: getHideInfo() || false,
     isHide: getIsHide() || false,
     searchType: 'local',
-    searchValue: ''
+    searchValue: '',
+    dirs: [],
+    objects: [],
+    cloudContextMenuInfo: {
+        showContextMenu: false,
+        position: {
+            left: 0,
+            right: 0
+        },
+        file: {}
+    }
 });
 
 function setIsHide(isHide) {
@@ -113,12 +134,28 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case SET_CLOUD_OBJECTS:
+            return state.merge({
+                objects: fromJS(action.payload.objects)
+            });
+        case SET_CLOUD_DIRS:
+            return state.merge({
+                dirs: fromJS(action.payload.dirs)
+            });
+        case SET_CLOUD_CONTEXT_MENU:
+            return state.merge({
+                cloudContextMenuInfo: fromJS(action.payload.cloudContextMenuInfo)
+            });
+        case FILE_LIST_CONTEXT_MENU:
+            return state.merge({
+                fileListContextMenuInfo: fromJS(action.payload.fileListContextMenuInfo)
+            });
         case TAB_CONTEXT_MENU:
             return state.merge({
                 tabContextMenuInfo: fromJS(action.payload.tabContextMenuInfo)
             });
         case DELETE_CLOUD_FILE:
-            let newCloudFiles = state.get('cloudFiles').toJS().filter(file => file.id !== action.payload.cloudFile.id);
+            let newCloudFiles = state.get('cloudFiles').toJS().filter(file => file.id !== action.payload.cloudFile.id && file.title !== action.payload.cloudFile.title);
             return state.merge({
                 cloudFiles: fromJS(newCloudFiles),
             });
@@ -149,9 +186,9 @@ export default function (state = defaultState, action) {
             let {[action.payload.file.id]: willRemovedFile, ...removedFile} = state.get('files').toJS();
             setFiles(removedFile);
             return state.merge({
-               files: fromJS(removedFile)
+                files: fromJS(removedFile)
             });
-        case FILELIST_CONTEXT_MENU:
+        case FILE_ITEM_CONTEXT_MENU:
             return state.merge({
                 contextMenuInfo: fromJS(action.payload.contextMenuInfo)
             });
@@ -168,9 +205,8 @@ export default function (state = defaultState, action) {
             // 删去willRemoveFiles
             let willRemoveFileId = action.payload.willRemoveFile.id;
             let willAddedFile = action.payload.willAddedFile;
-            // 删去setting的
-
             let {[willRemoveFileId]: willRemoveFile, ...willAddedFiles} = state.get('files').toJS();
+            // 删去setting的
             let hasAddedFiles = {
                 ...willAddedFiles,
                 [willAddedFile.id]: willAddedFile
@@ -222,12 +258,13 @@ export default function (state = defaultState, action) {
                 files: fromJS(newFiles)
             });
         case DELETE_FILE:
-            const {[action.payload.id]: deletedFile, ...restFiles} = state.get('files').toJS();
-            if (!!getFiles()[action.payload.id]) {
-                setFiles(restFiles);
+            let deletedFilesArr = obj2Array(state.get('files').toJS()).filter(file => file.id !== action.payload.file.id && file.title !== action.payload.file.title);
+            let deletedFilesObj = array2Obj(deletedFilesArr);
+            if (!action.payload.file.isNewlyCreate) {
+                setFiles(deletedFilesObj);
             }
             return state.merge({
-                files: fromJS(restFiles)
+                files: fromJS(deletedFilesObj)
             });
         case CHANGE_OPENED_FILE:
             setOpenedFileIds(action.payload.ids);

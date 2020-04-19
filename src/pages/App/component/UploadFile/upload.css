@@ -1,9 +1,101 @@
-.local-file-list {
-    width: 60%;
-    margin: 0 auto;
+.container {
+    width: 100%;
+    background: #fafafa;
+    min-height: calc(100% - 60px);
 }
 
-.upload-icon {
+.container .main {
+    width: 80%;
+    height: 100%;
+    margin: 0 auto;
+    background: #fff;
+}
+
+.container .main .main-content {
+    width: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-wrap: wrap;
+    padding-top: 10px;
+    -moz-user-select:none;
+}
+
+.item {
+    width: 125px;
+    height: 125px;
+    margin-right: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.item img {
+    width: 60px;
+}
+
+.ant-card-cover {
+    height: 80%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ant-card-body {
+    padding: 0;
+}
+
+.ant-card-meta-title {
+    font-size: 12px;
+    text-align: center;
+}
+
+.plus-folder {
+    font-size: 30px;
+}
+
+.item.plus .ant-card-cover {
+    height: 100%;
+}
+
+.upload-header {
+    width: 80%;
+    height: 40px;
+    line-height: 40px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+}
+
+.op {
+    width: 100px;
+    height: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.op span {
     cursor: pointer;
-    font-size: 20px;
+}
+
+.nav {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+}
+
+.item.pic img{
+    width: 80%;
+}
+
+.upload-file-context-menu {
+    position: fixed;
+    background: #fff;
+    z-index: 10;
+}
+
+.upload-file-context-menu-item:hover {
+    background: #fafafa;
+    cursor: pointer;
 }

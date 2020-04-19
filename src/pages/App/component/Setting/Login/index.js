@@ -2,12 +2,12 @@ import React, {useState} from 'react'
 import {useHistory} from 'react-router-dom'
 import {Form, Input, Button, message} from 'antd';
 import {UserOutlined, LockOutlined} from '@ant-design/icons';
-import axios from '@/utils/http'
-import {isEmail} from '@/utils/helper'
+import axios from '../../../utils/http'
+import {isEmail} from '../../../utils/helper'
 import useAction from "../../../hooks/useAction";
 import * as action from '../../../store/action'
 
-const {settingsStore} = require('@/utils/store');
+const {settingsStore} = require('../../../utils/store');
 
 const Login = () => {
     const [loading, setLoading] = useState(false);

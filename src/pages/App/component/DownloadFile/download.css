@@ -3,9 +3,10 @@
     margin: 0 auto;
 }
 
-.download-icon {
+:global .download-icon {
     cursor: pointer;
-    font-size: 20px;
+    font-size: 16px;
+    margin-right: 10px;
 }
 
 .ant-table-container table > thead > tr:first-child th:last-child {
@@ -15,3 +16,4 @@
 .ant-table-tbody > tr > td:last-child {
     text-align: center;
 }
+

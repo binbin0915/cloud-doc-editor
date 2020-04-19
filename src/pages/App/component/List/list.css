@@ -3,6 +3,7 @@
     align-items: center;
     padding-left: 1rem;
     cursor: pointer;
+    height: 56px;
 }
 
 .title {
@@ -14,6 +15,9 @@
     flex: 1;
     display: flex;
     justify-content: space-around;
+    align-items: center;
+    height: 22px;
+    font-size: 15px;
 }
 
 .rename-input {
@@ -31,4 +35,10 @@
 
 .file-context-menu-item {
     cursor: pointer;
+}
+
+.list-item > span:nth-child(1) {
+    display: block;
+    height: 22px;
+    line-height: 26px;
 }

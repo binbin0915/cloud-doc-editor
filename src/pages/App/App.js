@@ -4,7 +4,7 @@ import {Row, Spin, message} from 'antd'
 import {UploadFile, DownloadFile, EditorMain, Setting, EditPwd} from './component'
 import Header from './component/Header'
 import './App.css'
-import axios from '@/utils/http'
+import axios from './utils/http'
 import useAction from "./hooks/useAction";
 import * as action from "./store/action";
 
@@ -15,7 +15,7 @@ const Store = window.require('electron-store');
 const settingsStore = new Store({
     name: 'Settings'
 });
-const token =  settingsStore.get('token');
+const token = settingsStore.get('token');
 export default function App() {
     const defaultSavedFileLocation = path.join(remote.app.getPath('documents'), 'markdown');
     const fileDownloadPath = remote.app.getPath('downloads');
@@ -39,13 +39,12 @@ export default function App() {
             .catch(() => message.error('连接服务器失败'));
         setSearchType('local');
     }, []);
+
     return (
         <React.Fragment>
-            <div onContextMenu={e => false}>
-                <Row className={'editor-header'}>
-                    <Header />
-                </Row>
-            </div>
+            <Row className={'editor-header'}>
+                <Header/>
+            </Row>
             <Row className={'editor-main'}>
                 <Suspense fallback={<Spin className={'router-spin'} size={'large'}/>}>
                     <Switch>

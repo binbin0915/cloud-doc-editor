@@ -1,5 +1,5 @@
 .drag {
-    height: 100%;
+    height: calc(100% - 32px);
 }
 .start-page {
     font-size: 30px;
@@ -17,17 +17,20 @@
 
 .file-context-menu {
     background: #fff;
+    position: fixed;
+    z-index: 10;
 }
 
 .main-pane {
-    height: calc(100% - 32px);
+    height: 100%;
+    padding-right: 2%;
 }
 
 :global .ant-tabs-bar {
     margin: 0;
 }
 :global .for-container {
-    height: 515px;
+    height: 95%;
     border-radius: 0px;
 }
 :global .ant-tabs-content {
@@ -82,4 +85,15 @@
 
 .inner:hover .delete-icon{
     display: block;
+}
+
+.sync {
+    flex: 1;
+    height: 32px;
+    width: 100%;
+    font-size: 12px;
+    color: #959694;
+    display: flex;
+    align-items: center;
+    text-indent: 5px;
 }
