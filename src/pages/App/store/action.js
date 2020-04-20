@@ -21,7 +21,9 @@ import {
     FILE_LIST_CONTEXT_MENU,
     SET_CLOUD_DIRS,
     SET_CLOUD_CONTEXT_MENU,
-    SET_CLOUD_OBJECTS
+    SET_CLOUD_OBJECTS,
+    SET_COPY_FILE,
+    SET_ACTIVE
 } from './constants'
 
 export const changeActiveKey = id => ({type: CHANGE_ACTIVE_KEY, payload: {id}});
@@ -72,3 +74,7 @@ export const setCloudDir = dirs => ({type: SET_CLOUD_DIRS, payload: {dirs}});
 export const setCloudObjects = objects => ({type: SET_CLOUD_OBJECTS, payload: {objects}});
 
 export const setCloudFileContextMenuInfo = cloudContextMenuInfo => ({type: SET_CLOUD_CONTEXT_MENU, payload: {cloudContextMenuInfo}});
+
+export const setCopyFile = file => ({type: SET_COPY_FILE, payload: {file}});
+
+export const setActive = active => ({type: SET_ACTIVE, payload: {active}});

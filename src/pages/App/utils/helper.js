@@ -55,3 +55,22 @@ export function isEmail(email) {
     let regExp = /^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/;
     return regExp.test(email)
 }
+
+export function formatSize(size) {
+    let mb = 1024 * 1024;
+    let kb = 1024;
+    if (size > mb) {
+        return Math.floor(((size / mb) * 100)) / 100 + 'MB'
+    }
+    if (size > kb) {
+        return Math.floor(((size / kb) * 100)) / 100 + 'KB'
+    } else {
+        return Math.floor(size * 100) / 100 + 'B'
+    }
+}
+
+let imageExtNames = ['jpg', 'jpeg', 'png', 'swf', 'JPG', 'JPEG', 'PNG', 'SWF'];
+
+export function isImage(extname) {
+    return imageExtNames.indexOf(extname) !== -1;
+}

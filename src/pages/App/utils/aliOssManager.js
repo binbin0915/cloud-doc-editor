@@ -7,6 +7,7 @@ const OSS = window.require('ali-oss');
 const fs = window.require('fs');
 const {SuccessModel, ErrorModel, FailedModel} = require('./Model');
 const Store = window.require('electron-store');
+import axios from 'axios';
 
 const settingsStore = new Store({
     name: 'Settings'
@@ -18,6 +19,10 @@ const bucket = settingsStore.get('bucketName');
 
 class AliOSS {
     constructor({accessKeyId, accessKeySecret, bucket, endpoint}) {
+        this.ak = accessKeyId;
+        this.sk = accessKeySecret;
+        this.bucket = bucket;
+        this.endPoint = endpoint;
         this.store = OSS({endpoint, accessKeyId, accessKeySecret, bucket});
         this.client = new OSS({endpoint, accessKeyId, accessKeySecret, bucket});
     }
@@ -147,12 +152,48 @@ class AliOSS {
         }
     }
 
+    async downloadFile_v2(key, filePath) {
+        try {
+            let {res, stream} = await this.client.getStream(key);
+            if (res.status === 200) {
+                let writeStream = fs.createWriteStream(filePath);
+                stream.pipe(writeStream);
+                return new SuccessModel({
+                    msg: '下载成功'
+                });
+            } else {
+                return new FailedModel({
+                    msg: '下载失败'
+                })
+            }
+        } catch (e) {
+            return new ErrorModel({
+                msg: '阿里云OSS服务器异常'
+            })
+        }
+    }
+
     async getImgUrl(key, cndUrl) {
         try {
             return this.client.generateObjectUrl(key, cndUrl);
         } catch (e) {
 
         }
+    }
+
+    async createDir(key) {
+        let url = 'https://' + this.bucket + '.' + this.endPoint + '/' + key;
+        return axios.put(url)
+    }
+
+    async copyFile(from, to) {
+        let url = 'https://' + this.bucket + '.' + this.endPoint + '/' + to;
+        return axios(url, {
+            method: 'put',
+            headers: {
+                'x-oss-copy-source': '/cloud-doc-editor/' + from
+            }
+        })
     }
 }
 

@@ -22,7 +22,9 @@ import {
     FILE_LIST_CONTEXT_MENU,
     SET_CLOUD_DIRS,
     SET_CLOUD_CONTEXT_MENU,
-    SET_CLOUD_OBJECTS
+    SET_CLOUD_OBJECTS,
+    SET_ACTIVE,
+    SET_COPY_FILE
 } from './constants'
 import {array2Obj, obj2Array} from "../utils/helper";
 
@@ -64,8 +66,8 @@ const defaultState = fromJS({
     isHide: getIsHide() || false,
     searchType: 'local',
     searchValue: '',
-    dirs: [],
-    objects: [],
+    dirs: {},
+    objects: {},
     cloudContextMenuInfo: {
         showContextMenu: false,
         position: {
@@ -73,7 +75,10 @@ const defaultState = fromJS({
             right: 0
         },
         file: {}
-    }
+    },
+    loading: false,
+    copyFile: {},
+    active: ''
 });
 
 function setIsHide(isHide) {
@@ -134,12 +139,22 @@ function setFiles(files) {
 
 export default function (state = defaultState, action) {
     switch (action.type) {
+        case SET_ACTIVE:
+            return state.merge({
+                active: fromJS(action.payload.active)
+            });
+        case SET_COPY_FILE:
+            return state.merge({
+                copyFile: fromJS(action.payload.file)
+            });
         case SET_CLOUD_OBJECTS:
             return state.merge({
+                loading: true,
                 objects: fromJS(action.payload.objects)
             });
         case SET_CLOUD_DIRS:
             return state.merge({
+                loading: true,
                 dirs: fromJS(action.payload.dirs)
             });
         case SET_CLOUD_CONTEXT_MENU:
